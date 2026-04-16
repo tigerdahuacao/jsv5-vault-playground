@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ClientIDPanel from "@/components/ClientIDPanel";
 import CardCopyInfo from "@/components/CardCopyInfo";
 import { testCard } from "@/lib/config";
-import { useVaultStore } from "@/store/vault";
+import { useVaultStore, type VaultModel } from "@/store/vault";
 import { cn } from "@/lib/utils";
 
-type VaultModel = "firstTime" | "returning";
 type FlowColor = "blue" | "emerald" | "violet";
 type FlowCategory = "with_purchase" | "without_purchase" | "api";
 
@@ -56,7 +55,7 @@ const flows: Flow[] = [
   {
     id: "checkout_API",
     label: "API Vault",
-    description: "Step-by-step raw API vault demo — first time & returning are the same",
+    description: "Step-by-step raw API vault demo",
     icon: "⚡",
     category: "api",
     color: "violet",
@@ -70,9 +69,12 @@ const colorMap = {
 };
 
 export default function HomePage() {
-  const [model, setModel] = useState<VaultModel>("firstTime");
-  const [useAuthAssertion, setUseAuthAssertion] = useState(true);
-  const { thirdPartyApp, firstPartyApp } = useVaultStore();
+  const router = useRouter();
+  const {
+    model, setModel,
+    useAuthAssertion, setUseAuthAssertion,
+    thirdPartyApp, firstPartyApp,
+  } = useVaultStore();
 
   const onNavClick = (route: string) => {
     if (useAuthAssertion && !thirdPartyApp) {
@@ -83,9 +85,7 @@ export default function HomePage() {
       alert("Please choose a 1st Party Client!");
       return;
     }
-
-    const url = `${window.location.origin}/${route}?model=${model}&is_use_PAYPAL_AUTH_ASSERTION=${useAuthAssertion}&route=${route}`;
-    window.open(url, "_blank");
+    router.push(`/${route}?model=${model}&is_use_PAYPAL_AUTH_ASSERTION=${useAuthAssertion}`);
   };
 
   const withPurchase = flows.filter((f) => f.category === "with_purchase");
@@ -118,7 +118,7 @@ export default function HomePage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-            {/* Buyer Model */}
+            {/* Buyer Type */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Buyer Type
@@ -127,7 +127,7 @@ export default function HomePage() {
                 {(["firstTime", "returning"] as const).map((m) => (
                   <button
                     key={m}
-                    onClick={() => setModel(m)}
+                    onClick={() => setModel(m as VaultModel)}
                     className={cn(
                       "flex-1 py-3 px-4 rounded-xl text-sm font-semibold border-2 transition-all duration-200",
                       model === m
@@ -141,41 +141,40 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Auth Mode */}
+            {/* Auth Mode — mutually exclusive buttons */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Auth Mode
               </label>
-              <button
-                onClick={() => setUseAuthAssertion((p) => !p)}
-                className={cn(
-                  "w-full py-3 px-4 rounded-xl text-sm font-semibold border-2 transition-all duration-200 flex items-center gap-3",
-                  useAuthAssertion
-                    ? "border-violet-500 bg-violet-600 text-white shadow-lg shadow-violet-200"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:bg-violet-50"
-                )}
-              >
-                <span
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setUseAuthAssertion(true)}
                   className={cn(
-                    "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0",
-                    useAuthAssertion ? "bg-white border-white" : "border-slate-300"
+                    "flex-1 py-3 px-4 rounded-xl text-sm font-semibold border-2 transition-all duration-200",
+                    useAuthAssertion
+                      ? "border-violet-500 bg-violet-600 text-white shadow-lg shadow-violet-200 scale-[1.02]"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:bg-violet-50"
                   )}
                 >
-                  {useAuthAssertion && (
-                    <svg className="w-3 h-3 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
+                  3rd Party
+                </button>
+                <button
+                  onClick={() => setUseAuthAssertion(false)}
+                  className={cn(
+                    "flex-1 py-3 px-4 rounded-xl text-sm font-semibold border-2 transition-all duration-200",
+                    !useAuthAssertion
+                      ? "border-amber-500 bg-amber-500 text-white shadow-lg shadow-amber-200 scale-[1.02]"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:bg-amber-50"
                   )}
-                </span>
-                {useAuthAssertion
-                  ? "3rd Party · PayPal-Auth-Assertion ON"
-                  : "1st Party · Direct Merchant"}
-              </button>
+                >
+                  1st Party
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Client ID Panel */}
+        {/* Client ID Panel — shows only the relevant party */}
         <ClientIDPanel />
 
         {/* Flow Selection */}
@@ -183,7 +182,6 @@ export default function HomePage() {
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
             Test Flows
           </h2>
-
           <FlowSection title="With Purchase" flows={withPurchase} onNavClick={onNavClick} />
           <FlowSection title="Without Purchase (Save Only)" flows={withoutPurchase} onNavClick={onNavClick} />
           <FlowSection title="Raw API Demo" flows={apiFlows} onNavClick={onNavClick} />
@@ -238,8 +236,10 @@ function FlowSection({
                 <p className="text-sm font-bold text-slate-800">{flow.label}</p>
                 <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{flow.description}</p>
               </div>
-              <svg className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </div>
