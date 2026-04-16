@@ -22,6 +22,8 @@ export const initClientIDSecret = (
   is_use_PAYPAL_AUTH_ASSERTION = isUsePAYPAL_AUTH_ASSERTION;
 };
 
+export const getAccessToken = () => access_token;
+
 export const initVaultInfo = (
   vault_model: string,
   vault_id: string,
@@ -231,13 +233,25 @@ export async function createOrder(body: Record<string, unknown>): Promise<{
   jsonResponse: Record<string, unknown>;
   httpStatusCode: number;
 }> {
+  const tag = "[paypal-api.createOrder]";
   const url = `${base}/v2/checkout/orders`;
-  const response = await fetch(url, {
-    headers: buildHeaders(),
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-  return handleResponse(response);
+
+  const headers = buildHeaders();
+  const tokenPreview = access_token
+    ? `${access_token.slice(0, 8)}...${access_token.slice(-4)}`
+    : "(none)";
+  console.log(`${tag} POST ${url}`);
+  console.log(`${tag} access_token preview: ${tokenPreview}`);
+  console.log(`${tag} is_use_PAYPAL_AUTH_ASSERTION: ${is_use_PAYPAL_AUTH_ASSERTION}`);
+  console.log(`${tag} PayPal-Auth-Assertion header present: ${!!headers["Paypal-Auth-Assertion"]}`);
+  console.log(`${tag} request body:`, JSON.stringify(body, null, 2));
+
+  const response = await fetch(url, { headers, method: "POST", body: JSON.stringify(body) });
+
+  console.log(`${tag} response status: ${response.status} ${response.statusText}`);
+  const result = await handleResponse(response);
+  console.log(`${tag} parsed response:`, JSON.stringify(result.jsonResponse, null, 2));
+  return result;
 }
 
 async function getOrderDetail(

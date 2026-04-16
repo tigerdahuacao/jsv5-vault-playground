@@ -223,7 +223,7 @@ function CheckoutACDCContent() {
               </label>
               <div
                 id="card-name-field-container"
-                className="h-12 rounded-xl border-2 border-slate-200 overflow-hidden"
+                className="h-12"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -232,7 +232,7 @@ function CheckoutACDCContent() {
               </label>
               <div
                 id="card-number-field-container"
-                className="h-12 rounded-xl border-2 border-slate-200 overflow-hidden"
+                className="h-12"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -242,7 +242,7 @@ function CheckoutACDCContent() {
                 </label>
                 <div
                   id="card-expiry-field-container"
-                  className="h-12 rounded-xl border-2 border-slate-200 overflow-hidden"
+                  className="h-12"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -251,7 +251,7 @@ function CheckoutACDCContent() {
                 </label>
                 <div
                   id="card-cvv-field-container"
-                  className="h-12 rounded-xl border-2 border-slate-200 overflow-hidden"
+                  className="h-12"
                 />
               </div>
             </div>

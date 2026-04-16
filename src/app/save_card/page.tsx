@@ -129,26 +129,26 @@ function SaveCardContent() {
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Cardholder Name
               </label>
-              <div id="card-name-field-container" className="h-12 rounded-xl border-2 border-slate-200 overflow-hidden" />
+              <div id="card-name-field-container" className="h-12" />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Card Number
               </label>
-              <div id="card-number-field-container" className="h-12 rounded-xl border-2 border-slate-200 overflow-hidden" />
+              <div id="card-number-field-container" className="h-12" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Expiry Date
                 </label>
-                <div id="card-expiry-field-container" className="h-12 rounded-xl border-2 border-slate-200 overflow-hidden" />
+                <div id="card-expiry-field-container" className="h-12" />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   CVV
                 </label>
-                <div id="card-cvv-field-container" className="h-12 rounded-xl border-2 border-slate-200 overflow-hidden" />
+                <div id="card-cvv-field-container" className="h-12" />
               </div>
             </div>
 
