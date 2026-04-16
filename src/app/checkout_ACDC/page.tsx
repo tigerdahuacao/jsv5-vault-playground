@@ -131,6 +131,16 @@ function CheckoutACDCContent() {
       createOrder: createOrderCallback,
       onApprove: onApproveCallback,
       onError: (err: unknown) => showResult(`Error: ${err}`, "error"),
+      style: {
+        "input": {
+          "height": "44px",
+          "padding": "0 12px",
+          "font-size": "14px",
+          "font-family": "ui-sans-serif, system-ui, sans-serif",
+          "color": "#1e293b",
+        },
+        ".invalid": { "color": "#e11d48" },
+      },
     });
     cardFieldRef.current = cardField;
 
@@ -223,7 +233,7 @@ function CheckoutACDCContent() {
               </label>
               <div
                 id="card-name-field-container"
-                className="h-12"
+                className="h-11"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -232,7 +242,7 @@ function CheckoutACDCContent() {
               </label>
               <div
                 id="card-number-field-container"
-                className="h-12"
+                className="h-11"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -242,7 +252,7 @@ function CheckoutACDCContent() {
                 </label>
                 <div
                   id="card-expiry-field-container"
-                  className="h-12"
+                  className="h-11"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -251,7 +261,7 @@ function CheckoutACDCContent() {
                 </label>
                 <div
                   id="card-cvv-field-container"
-                  className="h-12"
+                  className="h-11"
                 />
               </div>
             </div>
