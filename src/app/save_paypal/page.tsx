@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
+import { usePaypalSdk } from "@/hooks/usePaypalSdk";
 import VaultCommonPart, {
   type VaultCommonPartRef,
   type VaultInitData,
@@ -18,7 +19,6 @@ function SavePayPalContent() {
 
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
   const vaultRef = useRef<VaultCommonPartRef>(null);
-  const [sdkReady, setSdkReady] = useState(false);
   const [resultMsg, setResultMsg] = useState("Waiting...");
   const [resultType, setResultType] = useState<ResultType>("idle");
 
@@ -27,19 +27,11 @@ function SavePayPalContent() {
     setResultType(type);
   }, []);
 
-  const loadSdk = useCallback((data: VaultInitData) => {
-    if (!data.clientId) return;
-    const existing = document.getElementById("paypal-sdk-script");
-    if (existing) existing.remove();
-    setSdkReady(false);
-
-    const script = document.createElement("script");
-    script.id = "paypal-sdk-script";
-    script.src = `https://www.paypal.com/sdk/js?client-id=${data.clientId}&components=buttons&vault=true&currency=USD`;
-    if (data.id_token) script.setAttribute("data-user-id-token", data.id_token);
-    script.onload = () => setSdkReady(true);
-    document.head.appendChild(script);
-  }, []);
+  const { sdkReady, loadSdk } = usePaypalSdk({
+    components: "buttons",
+    extraParams: "&vault=true",
+    onError: (msg) => showResult(msg, "error"),
+  });
 
   const createVaultSetupToken = useCallback(async () => {
     showResult("Creating setup token for PayPal...", "info");

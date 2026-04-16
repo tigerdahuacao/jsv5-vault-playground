@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
+import { usePaypalSdk } from "@/hooks/usePaypalSdk";
 import VaultCommonPart, {
   type VaultCommonPartRef,
   type VaultInitData,
@@ -20,7 +21,6 @@ function CheckoutACDCContent() {
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
-  const [sdkReady, setSdkReady] = useState(false);
   const [isVaultSave, setIsVaultSave] = useState(false);
   const [isWith3DS, setIsWith3DS] = useState(false);
   const [resultMsg, setResultMsg] = useState("Waiting for payment...");
@@ -28,29 +28,17 @@ function CheckoutACDCContent() {
   const [txnId, setTxnId] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [vaultId, setVaultId] = useState("");
-  const cardFieldRef = useRef<ReturnType<typeof window.paypal.CardFields> | null>(null);
-
   const showResult = useCallback((msg: string, type: ResultType) => {
     setResultMsg(msg);
     setResultType(type);
   }, []);
 
-  // Load PayPal SDK after init data is ready
-  const loadSdk = useCallback((data: VaultInitData) => {
-    if (!data.clientId) return;
-    const existing = document.getElementById("paypal-sdk-script");
-    if (existing) existing.remove();
-    setSdkReady(false);
-
-    const script = document.createElement("script");
-    script.id = "paypal-sdk-script";
-    script.src = `https://www.paypal.com/sdk/js?client-id=${data.clientId}&components=card-fields&currency=USD`;
-    if (data.id_token) {
-      script.setAttribute("data-user-id-token", data.id_token);
-    }
-    script.onload = () => setSdkReady(true);
-    document.head.appendChild(script);
-  }, []);
+  const { sdkReady, loadSdk, cardFieldInstanceRef } = usePaypalSdk({
+    components: "card-fields",
+    onError: (msg) => showResult(msg, "error"),
+  });
+  // Alias for CardFields instance storage
+  const cardFieldRef = cardFieldInstanceRef as React.MutableRefObject<ReturnType<typeof window.paypal.CardFields> | null>;
 
   const handleInitLoaded = useCallback(
     (data: VaultInitData) => {
