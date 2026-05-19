@@ -1,5 +1,24 @@
 "use client";
 
+/**
+ * ResultArea — 终端风格的日志输出组件
+ *
+ * 用于展示 PayPal API 调用的结果（成功 / 错误 / 处理中 / 等待）。
+ * 消息内容中的 JSON 块会被自动识别并格式化展示，支持一键复制全文。
+ * 高度固定可滚动（max-h-96），避免长错误内容撑开页面。
+ *
+ * Props：
+ * - message: 要显示的文本，可包含嵌入的 JSON 字符串
+ * - type: "success" | "error" | "info" | "idle"，控制颜色和标签
+ *
+ * 使用位置：
+ * - src/app/checkout_ACDC/page.tsx
+ * - src/app/checkout_PayPal/page.tsx
+ * - src/app/checkout_API/page.tsx
+ * - src/app/save_card/page.tsx
+ * - src/app/save_paypal/page.tsx
+ */
+
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 

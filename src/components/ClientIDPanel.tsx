@@ -1,5 +1,20 @@
 "use client";
 
+/**
+ * ClientIDPanel — 应用凭证选择面板
+ *
+ * 根据当前 Auth 模式（3rd Party / 1st Party）展示对应的应用下拉选择器。
+ * 选中后自动将 clientID / secret / merchantID 等信息存入 Zustand store，
+ * 供后续各结账页面在调用 /api/vault/init 时使用。
+ *
+ * 3rd Party 模式下额外提供 Sub-Merchant ID 输入框，
+ * 该值作为 PayPal-Auth-Assertion header 中的 payer_id，
+ * 缺失时会高亮提示（否则会触发 401 invalid_subject）。
+ *
+ * 使用位置：
+ * - src/app/page.tsx（首页，Auth 模式切换后自动切换显示内容）
+ */
+
 import { useState } from "react";
 import { clientIDConfigs, type AppEntry } from "@/lib/config";
 import { useVaultStore } from "@/store/vault";

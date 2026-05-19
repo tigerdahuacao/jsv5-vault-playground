@@ -1,5 +1,39 @@
 "use client";
 
+/**
+ * VaultCommonPart — 各结账页共享的 Vault 状态面板
+ *
+ * 职责：
+ * 1. 挂载时调用 /api/vault/init，初始化服务端的 PayPal 凭证和 Vault 上下文
+ * 2. 展示当前 Auth 模式标签（3rd/1st Party）和买家类型标签（首次/返回）
+ * 3. 提供 Customer ID、Vault ID 的可编辑输入（returning 模式自动回填）
+ * 4. 可选：展示"Use Vault ID to Pay"复选框（首次买家时置灰）
+ * 5. 可选：展示订单金额输入框
+ *
+ * 通过 ref（VaultCommonPartRef）向父组件暴露 getState()，
+ * 父组件在 createOrder 时调用以获取最新的 customerId / vaultId / useVault / orderAmount。
+ *
+ * 流程类型（flowType）由 route prop 自动推导：
+ * - "checkout_PayPal" / "save_paypal" → "paypal"
+ * - 其余 → "card"
+ * 用于从 Zustand store 读取对应的 customerID / vaultID，避免 card 和 paypal 数据互串。
+ *
+ * Props：
+ * - model: "firstTime" | "returning"
+ * - isUsePaypalAuthAssertion: 是否使用 3rd Party 模式
+ * - route: 当前页面路由名（用于推导 flowType 和传给 init API）
+ * - showVaultOption: 是否显示 "Use Vault ID to Pay" 复选框，默认 true
+ * - showOrderAmount: 是否显示金额输入框，默认 true
+ * - onInitDataLoaded: init 完成后的回调，父组件用来触发 SDK 加载
+ *
+ * 使用位置：
+ * - src/app/checkout_ACDC/page.tsx
+ * - src/app/checkout_PayPal/page.tsx
+ * - src/app/checkout_API/page.tsx
+ * - src/app/save_card/page.tsx
+ * - src/app/save_paypal/page.tsx
+ */
+
 import {
   useState,
   useEffect,

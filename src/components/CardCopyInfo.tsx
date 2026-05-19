@@ -1,5 +1,17 @@
 "use client";
 
+/**
+ * CardCopyInfo — 沙箱测试卡片信息展示组件
+ *
+ * 以深色卡片样式展示 PayPal 沙箱测试卡的卡号、有效期、CVV，
+ * 每个字段都带一键复制按钮，方便在填写 Card Fields 时快速粘贴。
+ *
+ * 使用位置：
+ * - src/app/page.tsx（首页，全局常驻展示）
+ * - src/app/checkout_ACDC/page.tsx（ACDC 结账页，SDK 加载后才显示）
+ * - src/app/save_card/page.tsx（保存卡页）
+ */
+
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
