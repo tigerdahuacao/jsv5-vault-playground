@@ -1,9 +1,3 @@
 name = "paypal-jsv5-vault-playground"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
-
-[vars]
-# Add any environment variables here if needed
-
-[[pages_build_output_dir]]
-# Cloudflare Pages build output
