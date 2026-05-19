@@ -116,7 +116,7 @@ function CheckoutPayPalContent() {
       if (captureData.status === "COMPLETED" || captureData.status === "ORDER_ALREADY_COMPLETED") {
         const vid = captureData.payment_source?.paypal?.attributes?.vault?.id || "";
         const cid = captureData.payment_source?.paypal?.attributes?.vault?.customer?.id || "";
-        if (cid || vid) saveVaultResult(isAuth, cid, vid);
+        if (cid || vid) saveVaultResult(isAuth, "paypal", cid, vid);
         showResult(
           `✓ Payment COMPLETED\nOrder: ${data.orderID}\nVault ID: ${vid}\nCustomer ID: ${cid}`,
           "success"

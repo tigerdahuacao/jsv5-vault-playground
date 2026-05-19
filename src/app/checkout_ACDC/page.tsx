@@ -23,11 +23,20 @@ function CheckoutACDCContent() {
   const [initData, setInitData] = useState<VaultInitData | null>(null);
   const [isVaultSave, setIsVaultSave] = useState(false);
   const [isWith3DS, setIsWith3DS] = useState(false);
+  const isVaultSaveRef = useRef(false);
+  const isWith3DSRef = useRef(false);
   const [resultMsg, setResultMsg] = useState("Waiting for payment...");
   const [resultType, setResultType] = useState<ResultType>("idle");
+  const [isLoading, setIsLoading] = useState(false);
+  const [overlayEnabled, setOverlayEnabled] = useState(true);
   const [txnId, setTxnId] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [vaultId, setVaultId] = useState("");
+  const [savedCard, setSavedCard] = useState<{ last4: string; brand: string; expiry: string } | null>(null);
+  // Keep refs in sync so createOrderCallback reads latest values without being recreated
+  useEffect(() => { isVaultSaveRef.current = isVaultSave; }, [isVaultSave]);
+  useEffect(() => { isWith3DSRef.current = isWith3DS; }, [isWith3DS]);
+
   const showResult = useCallback((msg: string, type: ResultType) => {
     setResultMsg(msg);
     setResultType(type);
@@ -44,8 +53,28 @@ function CheckoutACDCContent() {
     (data: VaultInitData) => {
       setInitData(data);
       loadSdk(data);
+      // Fetch saved card details for returning buyer
+      if (model === "returning" && data.VAULT_ID) {
+        fetch(
+          `/api/vault/paypal-api?endpoint=/v3/vault/payment-tokens/${data.VAULT_ID}&pathParam=`
+        )
+          .then((r) => r.json())
+          .then((d) => {
+            const card = d?.payment_source?.card;
+            if (card) {
+              setSavedCard({
+                last4: card.last_digits || "",
+                brand: card.brand || "",
+                expiry: card.expiry || "",
+              });
+            }
+          })
+          .catch((err) => {
+            console.warn("[checkout_ACDC] Failed to fetch saved card details:", err);
+          });
+      }
     },
-    [loadSdk]
+    [loadSdk, model]
   );
 
   const createOrderCallback = useCallback(async () => {
@@ -69,10 +98,10 @@ function CheckoutACDCContent() {
     const cardAttrs = (payment_source.card as Record<string, unknown>)
       .attributes as Record<string, unknown>;
 
-    if (isVaultSave && !useVault) {
+    if (isVaultSaveRef.current && !useVault) {
       cardAttrs["vault"] = { store_in_vault: "ON_SUCCESS" };
     }
-    if (isWith3DS) {
+    if (isWith3DSRef.current) {
       cardAttrs["verification"] = { method: "SCA_ALWAYS" };
     }
     if (customerId) {
@@ -96,9 +125,10 @@ function CheckoutACDCContent() {
     });
     const data = await res.json();
     return data.id;
-  }, [isVaultSave, isWith3DS]);
+  }, []);
 
   const onApproveCallback = useCallback(async (data: { orderID: string }) => {
+    setIsLoading(true);
     showResult("Processing payment...", "info");
     const res = await fetch(`/api/orders/${data.orderID}/capture`, {
       method: "POST",
@@ -116,16 +146,17 @@ function CheckoutACDCContent() {
       setTxnId(txn);
       setCustomerId(cid);
       setVaultId(vid);
-      if (cid || vid) saveVaultResult(isAuth, cid, vid);
+      if (cid || vid) saveVaultResult(isAuth, "card", cid, vid);
       showResult(`✓ Payment COMPLETED\nOrder: ${data.orderID}\nCapture: ${txn}`, "success");
     } else {
       showResult(`Error: ${JSON.stringify(captureData, null, 2)}`, "error");
     }
+    setIsLoading(false);
   }, [showResult, isAuth, saveVaultResult]);
 
-  // Initialize card fields once SDK is ready
+  // Initialize card fields once SDK is ready — skip for returning buyers (no card entry needed)
   useEffect(() => {
-    if (!sdkReady || !window.paypal?.CardFields) return;
+    if (!sdkReady || !window.paypal?.CardFields || !isFirstTime) return;
 
     const cardField = window.paypal.CardFields({
       createOrder: createOrderCallback,
@@ -152,19 +183,50 @@ function CheckoutACDCContent() {
     }
   }, [sdkReady, createOrderCallback, onApproveCallback, showResult]);
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    const state = vaultRef.current?.getState();
+    const useVault = state?.useVault || false;
+    const payVaultId = state?.vaultId || "";
+
+    // Returning buyer: pay directly with vault_id, no card entry needed
+    if (useVault && payVaultId) {
+      try {
+        const orderId = await createOrderCallback();
+        await onApproveCallback({ orderID: orderId });
+      } catch (err) {
+        setIsLoading(false);
+        showResult(`Transaction failed: ${err}`, "error");
+      }
+      return;
+    }
+
     if (!cardFieldRef.current) return;
+    setIsLoading(true);
     cardFieldRef.current
       .submit()
-      .catch((err: unknown) =>
-        showResult(`Transaction failed: ${err}`, "error")
-      );
+      .catch((err: unknown) => {
+        setIsLoading(false);
+        showResult(`Transaction failed: ${err}`, "error");
+      });
   };
 
   const isFirstTime = model === "firstTime";
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-10 px-4">
+    <main className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-10 px-4">
+      {/* Loading overlay */}
+      {isLoading && overlayEnabled && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4">
+            <svg className="w-10 h-10 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            </svg>
+            <p className="text-sm font-semibold text-slate-700">Processing payment…</p>
+            <p className="text-xs text-slate-400">Please do not close this page</p>
+          </div>
+        </div>
+      )}
       <div className="max-w-2xl mx-auto space-y-6">
 
         {/* Header */}
@@ -202,17 +264,53 @@ function CheckoutACDCContent() {
               label="Save to Vault"
               description="Store card for future use"
               activeColor="blue"
+              disabled={!isFirstTime}
             />
             <ToggleOption
               id="with3DS"
               checked={isWith3DS}
-              onChange={setIsWith3DS}
+              onChange={(v) => {
+                setIsWith3DS(v);
+                setOverlayEnabled(!v);
+              }}
               label="With 3DS"
               description="SCA_ALWAYS verification"
               activeColor="violet"
             />
+            <ToggleOption
+              id="overlay_enabled"
+              checked={overlayEnabled}
+              onChange={setOverlayEnabled}
+              label="Loading Overlay"
+              description={isWith3DS ? "Disabled — 3DS needs interaction" : "Show mask while processing"}
+              activeColor="blue"
+              disabled={isWith3DS}
+            />
           </div>
         </div>
+
+        {/* Saved card info — returning buyer only */}
+        {!isFirstTime && savedCard && (
+          <div className="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6 space-y-3">
+            <h2 className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
+              Saved Card
+            </h2>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Brand</span>
+                <span className="text-sm font-mono text-slate-700">{savedCard.brand || "—"}</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Last 4</span>
+                <span className="text-sm font-mono text-slate-700">•••• {savedCard.last4 || "—"}</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Expiry</span>
+                <span className="text-sm font-mono text-slate-700">{savedCard.expiry || "—"}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Card Fields */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 space-y-4">
@@ -220,13 +318,27 @@ function CheckoutACDCContent() {
             Card Details
           </h2>
 
-          {!sdkReady && (
-            <div className="h-48 flex items-center justify-center text-slate-400 text-sm animate-pulse">
-              Loading PayPal SDK...
-            </div>
-          )}
-
-          <div id="card-form" className={sdkReady ? "space-y-4" : "hidden"}>
+          {!isFirstTime ? (
+            /* Returning buyer — pay directly with vaulted card */
+            <button
+              onClick={handlePay}
+              className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98]
+                text-white font-bold text-sm shadow-lg shadow-emerald-200 transition-all duration-200
+                flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Pay with Saved Card
+            </button>
+          ) : (
+            <>
+              {!sdkReady && (
+                <div className="h-48 flex items-center justify-center text-slate-400 text-sm animate-pulse">
+                  Loading PayPal SDK...
+                </div>
+              )}
+              <div id="card-form" className={sdkReady ? "space-y-4" : "hidden"}>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Cardholder Name
@@ -276,6 +388,8 @@ function CheckoutACDCContent() {
               Pay Now
             </button>
           </div>
+            </>
+          )}
         </div>
 
         {/* Result */}
@@ -318,6 +432,7 @@ function ToggleOption({
   label,
   description,
   activeColor,
+  disabled = false,
 }: {
   id: string;
   checked: boolean;
@@ -325,6 +440,7 @@ function ToggleOption({
   label: string;
   description: string;
   activeColor: "blue" | "violet";
+  disabled?: boolean;
 }) {
   const active = {
     blue: "border-blue-500 bg-blue-50",
@@ -337,17 +453,21 @@ function ToggleOption({
     <label
       htmlFor={id}
       className={cn(
-        "flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-all duration-200",
-        checked
-          ? active[activeColor]
-          : "border-slate-200 bg-white hover:border-slate-300"
+        "flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all duration-200",
+        disabled
+          ? "border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
+          : cn(
+              "cursor-pointer",
+              checked ? active[activeColor] : "border-slate-200 bg-white hover:border-slate-300"
+            )
       )}
     >
       <input
         type="checkbox"
         id={id}
         checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
+        onChange={(e) => !disabled && onChange(e.target.checked)}
+        disabled={disabled}
         className="sr-only"
       />
       <div

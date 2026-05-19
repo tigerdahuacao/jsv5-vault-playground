@@ -59,8 +59,9 @@ function DetailRow({
 export default function ClientIDPanel({ className }: ClientIDPanelProps) {
   const {
     thirdPartyApp, firstPartyApp,
+    thirdParty,
     useAuthAssertion,
-    setThirdPartyApp, setFirstPartyApp,
+    setThirdPartyApp, setFirstPartyApp, setThirdPartyMerchantID,
   } = useVaultStore();
 
   const is3rd = useAuthAssertion;
@@ -115,6 +116,33 @@ export default function ClientIDPanel({ className }: ClientIDPanelProps) {
       </select>
 
       {selectedEntry && <AppDetails entry={selectedEntry} />}
+
+      {/* 3rd party requires a sub-merchant ID for PayPal-Auth-Assertion */}
+      {is3rd && (
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+            Auth-Assertion Target
+          </p>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs text-slate-400 font-medium">
+              Sub-Merchant ID <span className="text-rose-400">(required)</span>
+            </span>
+            <input
+              type="text"
+              value={thirdParty.merchantID}
+              onChange={(e) => setThirdPartyMerchantID(e.target.value)}
+              placeholder="e.g. CMHAMMNAXCMGA"
+              className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-mono text-slate-600
+                focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
+            />
+            {!thirdParty.merchantID && (
+              <p className="text-xs text-rose-400 mt-0.5">
+                Missing — PayPal-Auth-Assertion will return 401.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

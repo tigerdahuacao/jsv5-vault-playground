@@ -44,7 +44,8 @@ function SaveCardContent() {
   const createVaultSetupToken = useCallback(async () => {
     showResult("Creating setup token...", "info");
     const res = await fetch("/api/vault/setup-token-card");
-    return res.json();
+    const data = await res.json();
+    return data.id;
   }, [showResult]);
 
   const onApprove = useCallback(
@@ -57,7 +58,7 @@ function SaveCardContent() {
 
       const vaultId = result.id || "";
       const customerId = result.customer?.id || "";
-      if (vaultId || customerId) saveVaultResult(isAuth, customerId, vaultId);
+      if (vaultId || customerId) saveVaultResult(isAuth, "card", customerId, vaultId);
       showResult(
         `✓ Card Saved!\nVault ID: ${vaultId}\nCustomer ID: ${customerId}`,
         "success"

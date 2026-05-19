@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ClientIDPanel from "@/components/ClientIDPanel";
 import CardCopyInfo from "@/components/CardCopyInfo";
@@ -183,9 +184,12 @@ export default function HomePage() {
             Test Flows
           </h2>
           <FlowSection title="With Purchase" flows={withPurchase} onNavClick={onNavClick} />
-          <FlowSection title="Without Purchase (Save Only)" flows={withoutPurchase} onNavClick={onNavClick} />
+          <FlowSection title="Without Purchase (Save Only)" flows={withoutPurchase} onNavClick={onNavClick} disabled={model === "returning"} />
           <FlowSection title="Raw API Demo" flows={apiFlows} onNavClick={onNavClick} />
         </div>
+
+        {/* Vault Info */}
+        <VaultInfoPanel />
 
         {/* Test Card */}
         <CardCopyInfo
@@ -202,21 +206,119 @@ export default function HomePage() {
   );
 }
 
+function VaultInfoPanel() {
+  const { thirdParty, firstParty } = useVaultStore();
+
+  const rows: { label: string; party: typeof thirdParty; tag: string }[] = [
+    { label: "3rd Party", party: thirdParty, tag: "violet" },
+    { label: "1st Party", party: firstParty, tag: "amber" },
+  ];
+
+  const hasAnyData = rows.some(
+    (r) =>
+      r.party.card.vaultID ||
+      r.party.card.customerID ||
+      r.party.paypal.vaultID ||
+      r.party.paypal.customerID
+  );
+
+  if (!hasAnyData) return null;
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 space-y-4">
+      <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Stored Vault Info</h2>
+      <div className="space-y-4">
+        {rows.map(({ label, party, tag }) => {
+          const hasCard = party.card.vaultID || party.card.customerID;
+          const hasPaypal = party.paypal.vaultID || party.paypal.customerID;
+          if (!hasCard && !hasPaypal) return null;
+          const badgeClass = tag === "violet"
+            ? "bg-violet-100 text-violet-700 border-violet-200"
+            : "bg-amber-100 text-amber-700 border-amber-200";
+          return (
+            <div key={label} className="space-y-2">
+              <span className={cn("inline-flex text-xs font-semibold px-2 py-0.5 rounded-full border", badgeClass)}>
+                {label}
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {hasCard && (
+                  <VaultInfoCard icon="💳" title="Card" data={party.card} />
+                )}
+                {hasPaypal && (
+                  <VaultInfoCard icon="🅿" title="PayPal" data={party.paypal} />
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function VaultInfoCard({
+  icon, title, data,
+}: {
+  icon: string;
+  title: string;
+  data: { customerID: string; vaultID: string };
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+      <p className="text-xs font-bold text-slate-500 flex items-center gap-1.5">
+        <span>{icon}</span>{title}
+      </p>
+      <InfoRow label="Customer ID" value={data.customerID} />
+      <InfoRow label="Vault ID" value={data.vaultID} />
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  if (!value) return null;
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-mono text-slate-600 break-all flex-1">{value}</span>
+        <button
+          onClick={async () => {
+            await navigator.clipboard.writeText(value);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1200);
+          }}
+          className="text-[10px] text-blue-400 hover:text-blue-600 shrink-0"
+        >
+          {copied ? "✓" : "copy"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function FlowSection({
   title,
   flows,
   onNavClick,
+  disabled = false,
 }: {
   title: string;
   flows: Flow[];
   onNavClick: (id: string) => void;
+  disabled?: boolean;
 }) {
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", disabled && "opacity-40 pointer-events-none select-none")}>
       <div className="flex items-center gap-3">
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
           {title}
         </span>
+        {disabled && (
+          <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+            Not available for returning buyers
+          </span>
+        )}
         <div className="flex-1 h-px bg-slate-200" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -224,10 +326,12 @@ function FlowSection({
           <button
             key={flow.id}
             onClick={() => onNavClick(flow.id)}
+            disabled={disabled}
             className={cn(
               "group bg-white rounded-xl border-2 border-slate-200 p-4 text-left",
-              "transition-all duration-200 hover:shadow-lg hover:scale-[1.01]",
-              colorMap[flow.color]
+              "transition-all duration-200",
+              !disabled && "hover:shadow-lg hover:scale-[1.01]",
+              !disabled && colorMap[flow.color]
             )}
           >
             <div className="flex items-start gap-3">
@@ -237,7 +341,7 @@ function FlowSection({
                 <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{flow.description}</p>
               </div>
               <svg
-                className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5"
+                className="w-4 h-4 text-slate-300 shrink-0 mt-0.5"
                 fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

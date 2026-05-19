@@ -50,7 +50,7 @@ function SavePayPalContent() {
 
       const vaultId = result.id || "";
       const customerId = result.customer?.id || "";
-      if (vaultId || customerId) saveVaultResult(isAuth, customerId, vaultId);
+      if (vaultId || customerId) saveVaultResult(isAuth, "paypal", customerId, vaultId);
       showResult(
         `✓ PayPal Saved!\nVault ID: ${vaultId}\nCustomer ID: ${customerId}`,
         "success"

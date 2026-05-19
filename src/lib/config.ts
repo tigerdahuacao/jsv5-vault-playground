@@ -1,7 +1,7 @@
 // Mirror of config/default.json — centralised config for the Next.js app
 
 export const testCard = {
-  PAYPAL_TEST_CARD_NO: "4868719460707704",
+  PAYPAL_TEST_CARD_NO: "4111111111111111",
   PAYPAL_TEST_CARD_DATE: "12/2027",
   PAYPAL_TEST_CARD_CVV: "123",
 };
@@ -83,13 +83,34 @@ export const clientIDConfigs: {
 };
 
 export const USE_API_VAULT = {
+  paypal: {
+    Setup_token_for_paypal: JSON.stringify(
+      {
+        payment_source: {
+          paypal: {
+            usage_type: "MERCHANT",
+            customer_type: "CONSUMER",
+            experience_context: {
+              payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+              brand_name: "EXAMPLE INC",
+              locale: "en-US",
+              return_url: "https://example.com/returnUrl",
+              cancel_url: "https://example.com/cancelUrl",
+            },
+          },
+        },
+      },
+      null,
+      2
+    ),
+  },
   card: {
     Setup_token_for_card: JSON.stringify(
       {
         payment_source: {
           card: {
-            number: "4868719460707704",
-            expiry: "2025-12",
+            number: "4111111111111111",
+            expiry: "2027-12",
             name: "Firstname Lastname",
             billing_address: {
               address_line_1: "2211 N First Street",

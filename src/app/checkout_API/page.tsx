@@ -10,6 +10,8 @@ import ResultArea, { type ResultType } from "@/components/ResultArea";
 import { USE_API_VAULT } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
+type SourceType = "card" | "paypal";
+
 interface StepState {
   requestBody: string;
   response: string;
@@ -31,6 +33,7 @@ function CheckoutAPIContent() {
 
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
+  const [sourceType, setSourceType] = useState<SourceType>("card");
 
   const [step1, setStep1] = useState<StepState>({
     ...initialStep(),
@@ -170,11 +173,27 @@ function CheckoutAPIContent() {
     }
   };
 
+  const switchSourceType = (type: SourceType) => {
+    setSourceType(type);
+    setStep1((s) => ({
+      ...s,
+      requestBody:
+        type === "paypal"
+          ? USE_API_VAULT.paypal.Setup_token_for_paypal
+          : USE_API_VAULT.card.Setup_token_for_card,
+      response: "",
+      done: false,
+    }));
+  };
+
   const steps = [
     {
       num: 1,
-      title: "Create Setup Token (Card)",
-      description: "Initialize vault by creating a setup token for a card",
+      title: sourceType === "card" ? "Create Setup Token (Card)" : "Create Setup Token (PayPal)",
+      description:
+        sourceType === "card"
+          ? "Initialize vault by creating a setup token for a card"
+          : "Initialize vault by creating a setup token for a PayPal account",
       state: step1,
       setState: setStep1,
       onRun: runStep1,
@@ -233,6 +252,29 @@ function CheckoutAPIContent() {
             showOrderAmount={false}
             onInitDataLoaded={handleInitLoaded}
           />
+        </div>
+
+        {/* Source type toggle */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Step 1 Source
+          </span>
+          <div className="flex gap-1.5">
+            {(["card", "paypal"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => switchSourceType(t)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
+                  sourceType === t
+                    ? "bg-blue-600 border-blue-600 text-white shadow"
+                    : "bg-white border-slate-200 text-slate-500 hover:border-blue-300"
+                )}
+              >
+                {t === "card" ? "💳 Card" : "🅿 PayPal"}
+              </button>
+            ))}
+          </div>
         </div>
 
         <p className="text-xs text-slate-400 px-1">

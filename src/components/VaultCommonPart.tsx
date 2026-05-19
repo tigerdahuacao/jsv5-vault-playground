@@ -6,7 +6,7 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { useVaultStore } from "@/store/vault";
+import { useVaultStore, type FlowType } from "@/store/vault";
 import { cn } from "@/lib/utils";
 
 export interface VaultInitData {
@@ -59,10 +59,12 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
 
     const appTag = isUsePaypalAuthAssertion ? thirdPartyApp : firstPartyApp;
     const partyData = isUsePaypalAuthAssertion ? thirdParty : firstParty;
+    const flowType: FlowType = ["checkout_PayPal", "save_paypal"].includes(route) ? "paypal" : "card";
+    const flowData = partyData[flowType];
 
     const [initData, setInitData] = useState<VaultInitData | null>(null);
-    const [customerId, setCustomerId] = useState(partyData.customerID);
-    const [vaultId, setVaultId] = useState(partyData.vaultID);
+    const [customerId, setCustomerId] = useState(flowData.customerID);
+    const [vaultId, setVaultId] = useState(flowData.vaultID);
     const [useVault, setUseVault] = useState(model === "returning");
     const [orderAmount, setOrderAmount] = useState(
       String(Math.floor(Math.random() * 100) + 100)
@@ -75,6 +77,11 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
     }));
 
     useEffect(() => {
+      if (!appTag) {
+        setLoading(false);
+        return;
+      }
+
       const fetchInit = async () => {
         setLoading(true);
 
@@ -82,8 +89,8 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
           model,
           is_use_PAYPAL_AUTH_ASSERTION: String(isUsePaypalAuthAssertion),
           appTag,
-          customerID: partyData.customerID,
-          vaultID: partyData.vaultID,
+          customerID: flowData.customerID,
+          vaultID: flowData.vaultID,
           merchantID: partyData.merchantID,
           route,
         });
@@ -93,9 +100,9 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
         setInitData(data);
 
         if (model === "returning") {
-          setVaultId(data.VAULT_ID || partyData.vaultID);
+          setVaultId(data.VAULT_ID || flowData.vaultID);
           setUseVault(true);
-          setCustomerId(data.CUSTOMER_ID || partyData.customerID);
+          setCustomerId(data.CUSTOMER_ID || flowData.customerID);
         }
 
         onInitDataLoaded?.(data);
@@ -137,6 +144,20 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
           <div className="h-12 bg-slate-100 rounded-xl" />
           <div className="h-10 bg-slate-100 rounded-xl" />
           <div className="h-10 bg-slate-100 rounded-xl" />
+        </div>
+      );
+    }
+
+    if (!appTag) {
+      return (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-rose-200 bg-rose-50">
+          <span className="text-rose-500 text-lg shrink-0">⚠️</span>
+          <div>
+            <p className="text-sm font-semibold text-rose-700">No app selected</p>
+            <p className="text-xs text-rose-500 mt-0.5">
+              Go back to the dashboard and select a {isUsePaypalAuthAssertion ? "3rd Party" : "1st Party"} app first.
+            </p>
+          </div>
         </div>
       );
     }
@@ -193,13 +214,20 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
 
         {/* Vault option */}
         {showVaultOption && (
-          <div className="rounded-xl border-2 border-slate-200 bg-white p-4 space-y-3">
-            <label className="flex items-center gap-3 cursor-pointer group">
+          <div className={cn(
+            "rounded-xl border-2 bg-white p-4 space-y-3",
+            model === "firstTime" ? "border-slate-100 opacity-40" : "border-slate-200"
+          )}>
+            <label className={cn(
+              "flex items-center gap-3 group",
+              model === "firstTime" ? "cursor-not-allowed" : "cursor-pointer"
+            )}>
               <div className="relative">
                 <input
                   type="checkbox"
                   id="use_vault_checkbox"
                   checked={useVault}
+                  disabled={model === "firstTime"}
                   onChange={(e) => {
                     setUseVault(e.target.checked);
                     if (!e.target.checked) setVaultId("");
@@ -211,7 +239,9 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
                     "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
                     useVault
                       ? "bg-blue-600 border-blue-600"
-                      : "border-slate-300 group-hover:border-blue-400"
+                      : model === "firstTime"
+                        ? "border-slate-200"
+                        : "border-slate-300 group-hover:border-blue-400"
                   )}
                 >
                   {useVault && (
@@ -236,7 +266,9 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
                   Use Vault ID to Pay
                 </p>
                 <p className="text-xs text-slate-400">
-                  Enable to pay with a stored payment method
+                  {model === "firstTime"
+                    ? "Only available for returning buyers"
+                    : "Enable to pay with a stored payment method"}
                 </p>
               </div>
             </label>

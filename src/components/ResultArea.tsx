@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type ResultType = "success" | "error" | "info" | "idle";
@@ -38,7 +39,45 @@ const textColor: Record<ResultType, string> = {
   idle:    "text-slate-400",
 };
 
+// Split a message string into plain-text and JSON block segments
+function parseSegments(message: string): Array<{ kind: "text" | "json"; content: string }> {
+  const segments: Array<{ kind: "text" | "json"; content: string }> = [];
+  // Greedy match of top-level JSON objects/arrays
+  const jsonRegex = /(\{[\s\S]*\}|\[[\s\S]*\])/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = jsonRegex.exec(message)) !== null) {
+    try {
+      const parsed = JSON.parse(match[0]);
+      if (last < match.index) {
+        segments.push({ kind: "text", content: message.slice(last, match.index) });
+      }
+      segments.push({ kind: "json", content: JSON.stringify(parsed, null, 2) });
+      last = match.index + match[0].length;
+    } catch {
+      // not valid JSON — skip
+    }
+  }
+
+  if (last < message.length) {
+    segments.push({ kind: "text", content: message.slice(last) });
+  }
+
+  return segments.length > 0 ? segments : [{ kind: "text", content: message }];
+}
+
 export default function ResultArea({ message, type, className }: ResultAreaProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(message);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const segments = parseSegments(message || "Waiting for result...");
+
   return (
     <div className={cn("rounded-2xl overflow-hidden border border-slate-700/60 bg-[#0f1117]", className)}>
       {/* Terminal title bar */}
@@ -48,19 +87,36 @@ export default function ResultArea({ message, type, className }: ResultAreaProps
           {label[type]}
         </span>
         <div className="flex-1" />
+        {type !== "idle" && (
+          <button
+            onClick={handleCopy}
+            className="text-[10px] font-mono text-slate-500 hover:text-slate-300 transition-colors px-1.5 py-0.5 rounded"
+          >
+            {copied ? "✓ copied" : "copy"}
+          </button>
+        )}
         <span className="text-[10px] text-slate-600 font-mono">log</span>
       </div>
 
-      {/* Log body */}
-      <div className="px-4 py-3.5 min-h-[72px] flex items-start gap-2">
+      {/* Log body — scrollable with max height */}
+      <div className="px-4 py-3.5 min-h-[72px] max-h-96 overflow-y-auto flex items-start gap-2">
         <span className="text-slate-600 font-mono text-xs select-none shrink-0 mt-px">$</span>
-        <div
-          className={cn(
-            "text-xs leading-relaxed flex-1 break-words whitespace-pre-wrap font-mono transition-colors duration-300",
-            textColor[type]
+        <div className={cn("text-xs leading-relaxed flex-1 min-w-0 font-mono transition-colors duration-300", textColor[type])}>
+          {segments.map((seg, i) =>
+            seg.kind === "json" ? (
+              <pre
+                key={i}
+                className="mt-1 p-2 rounded-lg bg-slate-800/60 border border-slate-700/40 overflow-x-auto text-[11px] leading-relaxed"
+              >
+                {seg.content}
+              </pre>
+            ) : (
+              <span key={i} className="whitespace-pre-wrap break-words">
+                {seg.content}
+              </span>
+            )
           )}
-          dangerouslySetInnerHTML={{ __html: message || "Waiting for result..." }}
-        />
+        </div>
       </div>
     </div>
   );
