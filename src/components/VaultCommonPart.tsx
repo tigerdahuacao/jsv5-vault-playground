@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 
 export interface VaultInitData {
   clientId: string;
+  access_token: string;
   id_token: string;
   VAULT_MODEL: string;
   CUSTOMER_ID: string;

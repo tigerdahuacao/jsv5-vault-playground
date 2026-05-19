@@ -9,6 +9,7 @@ import VaultCommonPart, {
 import ResultArea, { type ResultType } from "@/components/ResultArea";
 import { USE_API_VAULT } from "@/lib/config";
 import { cn } from "@/lib/utils";
+import { buildPayPalHeaders } from "@/lib/api-client";
 
 type SourceType = "card" | "paypal";
 
@@ -33,6 +34,7 @@ function CheckoutAPIContent() {
 
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
+  const initDataRef = useRef<VaultInitData | null>(null);
   const [sourceType, setSourceType] = useState<SourceType>("card");
 
   const [step1, setStep1] = useState<StepState>({
@@ -57,6 +59,7 @@ function CheckoutAPIContent() {
 
   const handleInitLoaded = useCallback((data: VaultInitData) => {
     setInitData(data);
+    initDataRef.current = data;
     // Pre-initialize vault API access (no SDK needed for API flow)
     fetch(
       `/api/vault/init?model=${data.VAULT_MODEL}&is_use_PAYPAL_AUTH_ASSERTION=${data.is_use_PAYPAL_AUTH_ASSERTION}`
@@ -68,9 +71,10 @@ function CheckoutAPIContent() {
     setStep1((s) => ({ ...s, loading: true, response: "" }));
     try {
       const body = JSON.parse(step1.requestBody);
+      if (!initDataRef.current) return;
       const res = await fetch("/api/vault/paypal-api", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
         body: JSON.stringify({ endpoint: "/v3/vault/setup-tokens", requestBody: body }),
       });
       const data = await res.json();
@@ -96,9 +100,10 @@ function CheckoutAPIContent() {
     setStep2((s) => ({ ...s, loading: true, response: "" }));
     try {
       const body = JSON.parse(step2.requestBody);
+      if (!initDataRef.current) return;
       const res = await fetch("/api/vault/paypal-api", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
         body: JSON.stringify({ endpoint: "/v3/vault/payment-tokens", requestBody: body }),
       });
       const data = await res.json();
@@ -126,9 +131,10 @@ function CheckoutAPIContent() {
       const body = JSON.parse(step3.requestBody);
 
       // Create order
+      if (!initDataRef.current) return;
       const createRes = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
         body: JSON.stringify(body),
       });
       const orderData = await createRes.json();
@@ -141,6 +147,7 @@ function CheckoutAPIContent() {
       // Capture
       const captureRes = await fetch(`/api/orders/${orderData.id}/capture`, {
         method: "POST",
+        headers: buildPayPalHeaders(initDataRef.current),
       });
       const captureData = await captureRes.json();
       const pretty = JSON.stringify(captureData, null, 2);
@@ -158,8 +165,10 @@ function CheckoutAPIContent() {
     try {
       const params = new URLSearchParams(step4.requestBody);
       const customerId = params.get("customer_id") || "";
+      if (!initDataRef.current) return;
       const res = await fetch(
-        `/api/vault/paypal-api?endpoint=/v3/vault/payment-tokens&pathParam=customer_id=${customerId}`
+        `/api/vault/paypal-api?endpoint=/v3/vault/payment-tokens&pathParam=customer_id=${customerId}`,
+        { headers: buildPayPalHeaders(initDataRef.current) }
       );
       const data = await res.json();
       setStep4((s) => ({

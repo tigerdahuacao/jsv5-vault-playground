@@ -11,6 +11,7 @@ import ResultArea, { type ResultType } from "@/components/ResultArea";
 import CardCopyInfo from "@/components/CardCopyInfo";
 import { useVaultStore } from "@/store/vault";
 import { cn } from "@/lib/utils";
+import { buildPayPalHeaders } from "@/lib/api-client";
 
 
 function CheckoutACDCContent() {
@@ -21,6 +22,7 @@ function CheckoutACDCContent() {
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
+  const initDataRef = useRef<VaultInitData | null>(null);
   const [isVaultSave, setIsVaultSave] = useState(false);
   const [isWith3DS, setIsWith3DS] = useState(false);
   const isVaultSaveRef = useRef(false);
@@ -52,11 +54,13 @@ function CheckoutACDCContent() {
   const handleInitLoaded = useCallback(
     (data: VaultInitData) => {
       setInitData(data);
+      initDataRef.current = data;
       loadSdk(data);
       // Fetch saved card details for returning buyer
       if (model === "returning" && data.VAULT_ID) {
         fetch(
-          `/api/vault/paypal-api?endpoint=/v3/vault/payment-tokens/${data.VAULT_ID}&pathParam=`
+          `/api/vault/paypal-api?endpoint=/v3/vault/payment-tokens/${data.VAULT_ID}&pathParam=`,
+          { headers: buildPayPalHeaders(data) }
         )
           .then((r) => r.json())
           .then((d) => {
@@ -118,9 +122,10 @@ function CheckoutACDCContent() {
       purchase_units: [{ amount: { currency_code: "USD", value: orderAmount } }],
     };
 
+    if (!initDataRef.current) return "";
     const res = await fetch("/api/orders", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
       body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -130,9 +135,10 @@ function CheckoutACDCContent() {
   const onApproveCallback = useCallback(async (data: { orderID: string }) => {
     setIsLoading(true);
     showResult("Processing payment...", "info");
+    if (!initDataRef.current) return;
     const res = await fetch(`/api/orders/${data.orderID}/capture`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
     });
     const captureData = await res.json();
 

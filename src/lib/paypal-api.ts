@@ -22,6 +22,23 @@ export const initClientIDSecret = (
   is_use_PAYPAL_AUTH_ASSERTION = isUsePAYPAL_AUTH_ASSERTION;
 };
 
+/**
+ * 用于非 init 的 API route：从请求 headers 中注入已有凭证，
+ * 跳过 generateToken 调用，直接设置 access_token 等模块变量。
+ * 解决 Cloudflare Workers edge 环境下模块级 state 无法跨请求共享的问题。
+ */
+export const setRequestCredentials = (
+  clientId: string,
+  merchantId: string,
+  isAuth: boolean,
+  token: string
+) => {
+  PAYPAL_CLIENT_ID = clientId;
+  TEST_MERCHANT_ID = merchantId;
+  is_use_PAYPAL_AUTH_ASSERTION = isAuth;
+  access_token = token;
+};
+
 export const getAccessToken = () => access_token;
 
 export const initVaultInfo = (

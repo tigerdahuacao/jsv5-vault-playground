@@ -1,7 +1,13 @@
-import { NextResponse } from "next/server";
-import { createSetupTokenSaveCard } from "@/lib/paypal-api";
+import { NextRequest, NextResponse } from "next/server";
+import { createSetupTokenSaveCard, setRequestCredentials } from "@/lib/paypal-api";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  setRequestCredentials(
+    request.headers.get("x-paypal-client-id") || "",
+    request.headers.get("x-paypal-merchant-id") || "",
+    request.headers.get("x-paypal-use-auth-assertion") === "true",
+    request.headers.get("x-paypal-access-token") || ""
+  );
   try {
     const { jsonResponse, httpStatusCode } = await createSetupTokenSaveCard();
     return NextResponse.json(jsonResponse, { status: httpStatusCode });

@@ -10,6 +10,7 @@ import VaultCommonPart, {
 import ResultArea, { type ResultType } from "@/components/ResultArea";
 import { useVaultStore } from "@/store/vault";
 import { cn } from "@/lib/utils";
+import { buildPayPalHeaders } from "@/lib/api-client";
 
 
 function SavePayPalContent() {
@@ -19,6 +20,7 @@ function SavePayPalContent() {
 
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
   const vaultRef = useRef<VaultCommonPartRef>(null);
+  const initDataRef = useRef<VaultInitData | null>(null);
   const [resultMsg, setResultMsg] = useState("Waiting...");
   const [resultType, setResultType] = useState<ResultType>("idle");
 
@@ -33,9 +35,20 @@ function SavePayPalContent() {
     onError: (msg) => showResult(msg, "error"),
   });
 
+  const handleInitLoaded = useCallback(
+    (data: VaultInitData) => {
+      initDataRef.current = data;
+      loadSdk(data);
+    },
+    [loadSdk]
+  );
+
   const createVaultSetupToken = useCallback(async () => {
     showResult("Creating setup token for PayPal...", "info");
-    const res = await fetch("/api/vault/setup-token-paypal");
+    if (!initDataRef.current) return "";
+    const res = await fetch("/api/vault/setup-token-paypal", {
+      headers: buildPayPalHeaders(initDataRef.current),
+    });
     const data = await res.json();
     return data.id;
   }, [showResult]);
@@ -43,8 +56,10 @@ function SavePayPalContent() {
   const onApprove = useCallback(
     async (data: { vaultSetupToken: string }) => {
       showResult("Creating payment token...", "info");
+      if (!initDataRef.current) return;
       const res = await fetch(
-        `/api/vault/payment-token?token_id=${data.vaultSetupToken}`
+        `/api/vault/payment-token?token_id=${data.vaultSetupToken}`,
+        { headers: buildPayPalHeaders(initDataRef.current) }
       );
       const result = await res.json();
 
@@ -93,7 +108,7 @@ function SavePayPalContent() {
             route="save_paypal"
             showVaultOption={false}
             showOrderAmount={false}
-            onInitDataLoaded={loadSdk}
+            onInitDataLoaded={handleInitLoaded}
           />
         </div>
 

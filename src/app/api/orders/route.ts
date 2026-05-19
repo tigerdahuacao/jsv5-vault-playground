@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createOrder, getAccessToken } from "@/lib/paypal-api";
+import { createOrder, setRequestCredentials } from "@/lib/paypal-api";
+
+function initFromRequest(request: NextRequest) {
+  setRequestCredentials(
+    request.headers.get("x-paypal-client-id") || "",
+    request.headers.get("x-paypal-merchant-id") || "",
+    request.headers.get("x-paypal-use-auth-assertion") === "true",
+    request.headers.get("x-paypal-access-token") || ""
+  );
+}
 
 export async function POST(request: NextRequest) {
   const tag = "[POST /api/orders]";
@@ -13,21 +22,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  const token = getAccessToken();
-  console.log(`${tag} access_token present: ${!!token} (length=${token?.length ?? 0})`);
-  if (!token) {
-    console.error(`${tag} access_token is missing — /api/vault/init may not have been called`);
-    return NextResponse.json(
-      { error: "Not initialized. Please reload the page to re-run /api/vault/init." },
-      { status: 401 }
-    );
-  }
+  initFromRequest(request);
 
   try {
-    console.log(`${tag} calling PayPal createOrder...`);
     const { jsonResponse, httpStatusCode } = await createOrder(body);
     console.log(`${tag} PayPal response [${httpStatusCode}]:`, JSON.stringify(jsonResponse, null, 2));
-
     if (httpStatusCode >= 400) {
       console.error(`${tag} PayPal returned error status ${httpStatusCode}`);
     }

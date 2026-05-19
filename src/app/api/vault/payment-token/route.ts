@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPaymentToken } from "@/lib/paypal-api";
+import { createPaymentToken, setRequestCredentials } from "@/lib/paypal-api";
 
 export async function GET(request: NextRequest) {
+  setRequestCredentials(
+    request.headers.get("x-paypal-client-id") || "",
+    request.headers.get("x-paypal-merchant-id") || "",
+    request.headers.get("x-paypal-use-auth-assertion") === "true",
+    request.headers.get("x-paypal-access-token") || ""
+  );
   try {
     const { searchParams } = new URL(request.url);
     const token_id = searchParams.get("token_id");

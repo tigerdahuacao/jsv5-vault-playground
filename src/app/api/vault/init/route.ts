@@ -41,10 +41,11 @@ export async function GET(request: NextRequest) {
     initVaultInfo(vault_model, vaultID, customerID);
 
     await generateClientToken();
-    const { id_token } = await generateToken();
+    const { id_token, access_token } = await generateToken();
 
     return NextResponse.json({
       clientId: PAYPAL_CLIENT_ID,
+      access_token,
       id_token,
       VAULT_MODEL: vault_model,
       CUSTOMER_ID: customerID,

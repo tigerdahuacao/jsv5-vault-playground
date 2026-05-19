@@ -10,6 +10,7 @@ import VaultCommonPart, {
 import ResultArea, { type ResultType } from "@/components/ResultArea";
 import { useVaultStore } from "@/store/vault";
 import { cn } from "@/lib/utils";
+import { buildPayPalHeaders } from "@/lib/api-client";
 
 
 function CheckoutPayPalContent() {
@@ -20,6 +21,7 @@ function CheckoutPayPalContent() {
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
+  const initDataRef = useRef<VaultInitData | null>(null);
   const [resultMsg, setResultMsg] = useState("Waiting for payment...");
   const [resultType, setResultType] = useState<ResultType>("idle");
 
@@ -36,6 +38,7 @@ function CheckoutPayPalContent() {
   const handleInitLoaded = useCallback(
     (data: VaultInitData) => {
       setInitData(data);
+      initDataRef.current = data;
       loadSdk(data);
     },
     [loadSdk]
@@ -48,9 +51,10 @@ function CheckoutPayPalContent() {
     const useVault = state?.useVault || false;
     const vaultId = state?.vaultId || "";
 
+    if (!initDataRef.current) return "";
     await fetch("/api/vault/store-params", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
       body: JSON.stringify({ isVaultSave: true, isCard: false }),
     });
 
@@ -98,7 +102,7 @@ function CheckoutPayPalContent() {
 
     const res = await fetch("/api/orders", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
       body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -108,8 +112,10 @@ function CheckoutPayPalContent() {
   const onApprove = useCallback(
     async (data: { orderID: string }) => {
       showResult("Processing payment...", "info");
+      if (!initDataRef.current) return;
       const res = await fetch(`/api/orders/${data.orderID}/capture`, {
         method: "POST",
+        headers: buildPayPalHeaders(initDataRef.current),
       });
       const captureData = await res.json();
 
@@ -153,7 +159,7 @@ function CheckoutPayPalContent() {
         };
         const res = await fetch("/api/orders", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current!) },
           body: JSON.stringify(body),
         });
         const d = await res.json();

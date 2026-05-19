@@ -10,6 +10,7 @@ import VaultCommonPart, {
 import ResultArea, { type ResultType } from "@/components/ResultArea";
 import CardCopyInfo from "@/components/CardCopyInfo";
 import { useVaultStore } from "@/store/vault";
+import { buildPayPalHeaders } from "@/lib/api-client";
 
 
 function SaveCardContent() {
@@ -20,6 +21,7 @@ function SaveCardContent() {
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
+  const initDataRef = useRef<VaultInitData | null>(null);
   const [resultMsg, setResultMsg] = useState("Waiting...");
   const [resultType, setResultType] = useState<ResultType>("idle");
   const showResult = useCallback((msg: string, type: ResultType) => {
@@ -36,6 +38,7 @@ function SaveCardContent() {
   const handleInitLoaded = useCallback(
     (data: VaultInitData) => {
       setInitData(data);
+      initDataRef.current = data;
       loadSdk(data);
     },
     [loadSdk]
@@ -43,7 +46,10 @@ function SaveCardContent() {
 
   const createVaultSetupToken = useCallback(async () => {
     showResult("Creating setup token...", "info");
-    const res = await fetch("/api/vault/setup-token-card");
+    if (!initDataRef.current) return "";
+    const res = await fetch("/api/vault/setup-token-card", {
+      headers: buildPayPalHeaders(initDataRef.current),
+    });
     const data = await res.json();
     return data.id;
   }, [showResult]);
@@ -51,8 +57,10 @@ function SaveCardContent() {
   const onApprove = useCallback(
     async (data: { vaultSetupToken: string }) => {
       showResult("Creating payment token...", "info");
+      if (!initDataRef.current) return;
       const res = await fetch(
-        `/api/vault/payment-token?token_id=${data.vaultSetupToken}`
+        `/api/vault/payment-token?token_id=${data.vaultSetupToken}`,
+        { headers: buildPayPalHeaders(initDataRef.current) }
       );
       const result = await res.json();
 
