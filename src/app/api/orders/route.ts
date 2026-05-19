@@ -1,3 +1,4 @@
+export const runtime = "edge";
 import { NextRequest, NextResponse } from "next/server";
 import { createOrder, getAccessToken } from "@/lib/paypal-api";
 
