@@ -90,7 +90,7 @@ function SavePayPalContent() {
   }, [sdkReady, createVaultSetupToken, onApprove, showResult]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-10 px-4">
+    <main className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <a href="/" className="text-slate-400 hover:text-slate-600 transition-colors text-sm">
@@ -100,7 +100,7 @@ function SavePayPalContent() {
           <h1 className="text-xl font-black text-slate-900">Save PayPal (No Purchase)</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
           <VaultCommonPart
             ref={vaultRef}
             model={model}

@@ -149,13 +149,13 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
     }, [model, isUsePaypalAuthAssertion, appTag]);
 
     const partyBadge = isUsePaypalAuthAssertion ? (
-      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-50 border border-violet-200">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200">
         <span className="w-2 h-2 rounded-full bg-violet-500" />
         <span className="text-sm font-semibold text-violet-700">3rd Party Model</span>
         <span className="text-xs text-violet-500">· PayPal-Auth-Assertion enabled</span>
       </div>
     ) : (
-      <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
         <span className="w-2 h-2 rounded-full bg-amber-500" />
         <span className="text-sm font-semibold text-amber-700">1st Party Model</span>
         <span className="text-xs text-amber-500">· Direct merchant</span>
@@ -164,12 +164,12 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
 
     const modelBadge =
       model === "firstTime" ? (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-100 text-sky-700 text-xs font-semibold border border-sky-200">
-          🆕 First Time Buyer
+        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold border border-sky-200">
+          First Time Buyer
         </span>
       ) : (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200">
-          🔁 Returning Buyer
+        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+          Returning Buyer
         </span>
       );
 
@@ -185,7 +185,7 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
 
     if (!appTag) {
       return (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-rose-200 bg-rose-50">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-rose-200 bg-rose-50">
           <span className="text-rose-500 text-lg shrink-0">⚠️</span>
           <div>
             <p className="text-sm font-semibold text-rose-700">No app selected</p>
@@ -213,7 +213,7 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
             type="text"
             value={initData?.clientId || ""}
             disabled
-            className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-2.5 text-xs font-mono text-slate-500 cursor-not-allowed"
+            className="w-full rounded-lg border-2 border-slate-100 bg-slate-50 px-3 py-2.5 text-xs font-mono text-slate-500 cursor-not-allowed"
           />
         </div>
 
@@ -242,7 +242,7 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
                 ? "Optional: enter custom customer ID"
                 : "Customer ID from vault"
             }
-            className="w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
+            className="w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
               focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
           />
         </div>
@@ -250,7 +250,7 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
         {/* Vault option */}
         {showVaultOption && (
           <div className={cn(
-            "rounded-xl border-2 bg-white p-4 space-y-3",
+            "rounded-lg border-2 bg-white p-4 space-y-3",
             model === "firstTime" ? "border-slate-100 opacity-40" : "border-slate-200"
           )}>
             <label className={cn(
@@ -315,7 +315,7 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
                 value={vaultId}
                 onChange={(e) => setVaultId(e.target.value)}
                 placeholder="Enter vault_id"
-                className="w-full rounded-xl border-2 border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-mono text-blue-700
+                className="w-full rounded-lg border-2 border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-mono text-blue-700
                   focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
               />
             )}

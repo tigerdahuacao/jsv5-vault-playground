@@ -27,8 +27,8 @@ interface ClientIDPanelProps {
 function AppDetails({ entry }: { entry: AppEntry }) {
   const [showSecret, setShowSecret] = useState(false);
   return (
-    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
-      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">App Details</p>
+    <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">App Details</p>
       <DetailRow label="Client ID" value={entry.clientID} />
       <DetailRow label="Secret" value={entry.secret} masked showState={showSecret} onToggle={() => setShowSecret(p => !p)} />
       {entry.merchantID && <DetailRow label="Merchant ID" value={entry.merchantID} />}
@@ -53,7 +53,7 @@ function DetailRow({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-slate-400 font-medium">{label}</span>
+      <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{label}</span>
       <div className="flex items-center gap-2">
         <span className="text-xs font-mono text-slate-600 break-all flex-1">
           {masked && !showState ? "••••••••••••" : value}
@@ -61,7 +61,7 @@ function DetailRow({
         {masked && (
           <button
             onClick={onToggle}
-            className="text-xs text-blue-500 hover:text-blue-700 shrink-0"
+            className="text-xs text-slate-400 hover:text-blue-500 transition-colors shrink-0"
           >
             {showState ? "Hide" : "Show"}
           </button>
@@ -94,22 +94,20 @@ export default function ClientIDPanel({ className }: ClientIDPanelProps) {
   };
 
   const badgeClass = is3rd
-    ? "bg-violet-100 text-violet-700 border border-violet-200"
-    : "bg-amber-100 text-amber-700 border border-amber-200";
+    ? "bg-violet-50 text-violet-700 border-violet-200"
+    : "bg-amber-50 text-amber-700 border-amber-200";
   const label = is3rd ? "3rd Party (Partner)" : "1st Party (Direct Merchant)";
   const focusClass = is3rd
-    ? "focus:border-violet-500 focus:ring-violet-100"
-    : "focus:border-amber-500 focus:ring-amber-100";
+    ? "focus:border-violet-400 focus:ring-violet-100"
+    : "focus:border-amber-400 focus:ring-amber-100";
 
   return (
-    <div className={cn("bg-white rounded-2xl shadow-lg border border-slate-100 p-5", className)}>
-      <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-blue-500" />
-        Client Configuration
-      </h3>
-
-      <div className="flex items-center gap-2 mb-3">
-        <span className={cn("text-xs font-semibold px-2 py-1 rounded-full", badgeClass)}>
+    <div className={cn("bg-white rounded-xl border border-slate-200 p-5", className)}>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+          Client Configuration
+        </p>
+        <span className={cn("text-xs font-semibold px-2 py-0.5 rounded border", badgeClass)}>
           {label}
         </span>
       </div>
@@ -119,7 +117,7 @@ export default function ClientIDPanel({ className }: ClientIDPanelProps) {
         onChange={(e) => handleChange(e.target.value)}
         data-select={is3rd ? "3rdParty" : "1stParty"}
         className={cn(
-          "w-full rounded-xl border-2 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 font-medium",
+          "w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 font-medium",
           "focus:ring-2 focus:outline-none transition-all cursor-pointer hover:border-slate-300",
           focusClass
         )}
@@ -132,15 +130,14 @@ export default function ClientIDPanel({ className }: ClientIDPanelProps) {
 
       {selectedEntry && <AppDetails entry={selectedEntry} />}
 
-      {/* 3rd party requires a sub-merchant ID for PayPal-Auth-Assertion */}
       {is3rd && (
-        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">
             Auth-Assertion Target
           </p>
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-slate-400 font-medium">
-              Sub-Merchant ID <span className="text-rose-400">(required)</span>
+            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+              Sub-Merchant ID <span className="text-rose-400 normal-case">(required)</span>
             </span>
             <input
               type="text"
@@ -151,7 +148,7 @@ export default function ClientIDPanel({ className }: ClientIDPanelProps) {
                 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-100 transition-all"
             />
             {!thirdParty.merchantID && (
-              <p className="text-xs text-rose-400 mt-0.5">
+              <p className="text-[10px] text-rose-400 mt-0.5">
                 Missing — PayPal-Auth-Assertion will return 401.
               </p>
             )}

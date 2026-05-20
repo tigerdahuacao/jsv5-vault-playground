@@ -98,7 +98,7 @@ export default function ResultArea({ message, type, className }: ResultAreaProps
   const segments = parseSegments(message || "Waiting for result...");
 
   return (
-    <div className={cn("rounded-2xl overflow-hidden border border-slate-700/60 bg-[#0f1117]", className)}>
+    <div className={cn("rounded-xl overflow-hidden border border-slate-700/60 bg-[#0f1117]", className)}>
       {/* Terminal title bar */}
       <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-800/80 border-b border-slate-700/60">
         <span className={cn("w-2.5 h-2.5 rounded-full shrink-0 transition-colors duration-300", accentColor[type])} />

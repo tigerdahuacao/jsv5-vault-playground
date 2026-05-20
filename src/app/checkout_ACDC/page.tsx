@@ -219,7 +219,7 @@ function CheckoutACDCContent() {
   const isFirstTime = model === "firstTime";
 
   return (
-    <main className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-10 px-4">
+    <main className="relative min-h-screen bg-slate-50 py-8 px-4">
       {/* Loading overlay */}
       {isLoading && overlayEnabled && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm">
@@ -245,7 +245,7 @@ function CheckoutACDCContent() {
         </div>
 
         {/* Vault Common Part */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
           <VaultCommonPart
             ref={vaultRef}
             model={model}
@@ -297,7 +297,7 @@ function CheckoutACDCContent() {
 
         {/* Saved card info — returning buyer only */}
         {!isFirstTime && savedCard && (
-          <div className="bg-white rounded-2xl shadow-lg border border-emerald-100 p-6 space-y-3">
+          <div className="bg-white rounded-xl border border-emerald-100 p-5 space-y-3">
             <h2 className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
               Saved Card
             </h2>
@@ -328,8 +328,8 @@ function CheckoutACDCContent() {
             /* Returning buyer — pay directly with vaulted card */
             <button
               onClick={handlePay}
-              className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98]
-                text-white font-bold text-sm shadow-lg shadow-emerald-200 transition-all duration-200
+              className="w-full py-4 rounded-lg bg-emerald-600 hover:bg-emerald-700
+                text-white font-bold text-sm transition-all duration-150
                 flex items-center justify-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -388,8 +388,8 @@ function CheckoutACDCContent() {
               id="multi-card-field-button"
               onClick={handlePay}
               disabled={!sdkReady}
-              className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm
-                shadow-lg shadow-blue-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm
+                transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Pay Now
             </button>
@@ -459,7 +459,7 @@ function ToggleOption({
     <label
       htmlFor={id}
       className={cn(
-        "flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all duration-200",
+        "flex-1 flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all duration-200",
         disabled
           ? "border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
           : cn(

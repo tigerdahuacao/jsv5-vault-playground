@@ -238,7 +238,7 @@ function CheckoutAPIContent() {
   ] as const;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-10 px-4">
+    <main className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <a href="/" className="text-slate-400 hover:text-slate-600 transition-colors text-sm">
@@ -251,7 +251,7 @@ function CheckoutAPIContent() {
           </span>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
           <VaultCommonPart
             ref={vaultRef}
             model={model}
@@ -356,7 +356,7 @@ function ApiStep({
   return (
     <div
       className={cn(
-        "bg-white rounded-2xl border-2 shadow-sm transition-all duration-200",
+        "bg-white rounded-xl border-2 transition-all duration-200",
         state.done ? `${c.done} ${c.border}` : "border-slate-200"
       )}
     >
@@ -378,8 +378,8 @@ function ApiStep({
           onClick={onRun}
           disabled={state.loading}
           className={cn(
-            "px-4 py-2 rounded-xl text-white text-xs font-bold shadow-lg transition-all duration-200",
-            "active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed",
+            "px-4 py-2 rounded-lg text-white text-xs font-bold transition-all duration-150",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
             c.btn
           )}
         >

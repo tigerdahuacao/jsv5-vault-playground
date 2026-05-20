@@ -110,7 +110,7 @@ function SaveCardContent() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-10 px-4">
+    <main className="min-h-screen bg-slate-50 py-8 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <a href="/" className="text-slate-400 hover:text-slate-600 transition-colors text-sm">
@@ -120,7 +120,7 @@ function SaveCardContent() {
           <h1 className="text-xl font-black text-slate-900">Save Card (No Purchase)</h1>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
           <VaultCommonPart
             ref={vaultRef}
             model={model}
@@ -174,8 +174,8 @@ function SaveCardContent() {
             <button
               onClick={handleSave}
               disabled={!sdkReady}
-              className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm
-                shadow-lg shadow-emerald-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm
+                transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Save Card to Vault
             </button>
