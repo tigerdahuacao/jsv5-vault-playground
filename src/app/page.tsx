@@ -1,6 +1,5 @@
 "use client";
 
-export const runtime = "edge";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -127,19 +126,19 @@ export default function HomePage() {
             Flow Configuration
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Buyer Type */}
+            {/* Buyer Type — pill shape, blue theme */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-500">Buyer Type</label>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 p-1 bg-slate-100 rounded-full">
                 {(["firstTime", "returning"] as const).map((m) => (
                   <button
                     key={m}
                     onClick={() => setModel(m as VaultModel)}
                     className={cn(
-                      "flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold border-2 transition-all duration-150",
+                      "flex-1 py-1.5 px-4 rounded-full text-sm font-semibold transition-all duration-200",
                       model === m
-                        ? "border-blue-500 bg-blue-600 text-white"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50"
+                        ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200/80"
+                        : "text-slate-400 hover:text-slate-600"
                     )}
                   >
                     {m === "firstTime" ? "First Time" : "Returning"}
@@ -148,17 +147,17 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Auth Mode */}
+            {/* Auth Mode — square shape, violet / amber identity */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-500">Auth Mode</label>
               <div className="flex gap-2">
                 <button
                   onClick={() => setUseAuthAssertion(true)}
                   className={cn(
-                    "flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold border-2 transition-all duration-150",
+                    "flex-1 py-2 px-4 rounded-md text-sm font-semibold border-2 transition-all duration-150 active:scale-[0.97]",
                     useAuthAssertion
-                      ? "border-violet-500 bg-violet-600 text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:bg-violet-50"
+                      ? "border-violet-400 bg-violet-500 text-white shadow-md shadow-violet-200"
+                      : "border-slate-200 bg-slate-50 text-slate-400 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-600"
                   )}
                 >
                   3rd Party
@@ -166,10 +165,10 @@ export default function HomePage() {
                 <button
                   onClick={() => setUseAuthAssertion(false)}
                   className={cn(
-                    "flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold border-2 transition-all duration-150",
+                    "flex-1 py-2 px-4 rounded-md text-sm font-semibold border-2 transition-all duration-150 active:scale-[0.97]",
                     !useAuthAssertion
-                      ? "border-amber-500 bg-amber-500 text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:bg-amber-50"
+                      ? "border-amber-400 bg-amber-500 text-white shadow-md shadow-amber-200"
+                      : "border-slate-200 bg-slate-50 text-slate-400 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600"
                   )}
                 >
                   1st Party

@@ -1,7 +1,5 @@
 "use client";
 
-export const runtime = "edge";
-
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { usePaypalSdk } from "@/hooks/usePaypalSdk";
