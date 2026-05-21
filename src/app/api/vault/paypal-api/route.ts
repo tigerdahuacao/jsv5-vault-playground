@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callPayPalAPI, setRequestCredentials } from "@/lib/paypal-api";
 
+export const runtime = "edge";
+
 function initFromRequest(request: NextRequest) {
   setRequestCredentials(
     request.headers.get("x-paypal-client-id") || "",

@@ -7,6 +7,8 @@ import {
 } from "@/lib/paypal-api";
 import { clientIDConfigs, testCard } from "@/lib/config";
 
+export const runtime = "edge";
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

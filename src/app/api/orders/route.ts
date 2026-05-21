@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "edge";
 import { createOrder, setRequestCredentials } from "@/lib/paypal-api";
 
 function initFromRequest(request: NextRequest) {

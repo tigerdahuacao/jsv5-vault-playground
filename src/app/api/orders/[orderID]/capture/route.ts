@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { captureOrder, setRequestCredentials } from "@/lib/paypal-api";
 
+export const runtime = "edge";
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ orderID: string }> }
