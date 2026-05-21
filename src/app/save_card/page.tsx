@@ -1,5 +1,7 @@
 "use client";
 
+export const runtime = "edge";
+
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { usePaypalSdk } from "@/hooks/usePaypalSdk";
@@ -132,7 +134,7 @@ function SaveCardContent() {
           />
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
             Card Details
           </h2>
