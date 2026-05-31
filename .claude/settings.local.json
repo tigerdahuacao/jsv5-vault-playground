@@ -7,7 +7,8 @@
       "mcp__plugin_everything-claude-code_exa__web_fetch_exa",
       "Skill(superpowers:brainstorming)",
       "Skill(code-review)",
-      "mcp__plugin_ecc_exa__web_fetch_exa"
+      "mcp__plugin_ecc_exa__web_fetch_exa",
+      "WebFetch(domain:developer.paypal.com)"
     ]
   }
 }

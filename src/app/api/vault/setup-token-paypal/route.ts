@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
     request.headers.get("x-paypal-access-token") || ""
   );
   try {
-    const { jsonResponse, httpStatusCode } = await createSetupTokenSavePayPal();
+    const permitMultiple = request.nextUrl.searchParams.get("permit_multiple_payment_tokens") === "true";
+    const { jsonResponse, httpStatusCode } = await createSetupTokenSavePayPal(permitMultiple);
     return NextResponse.json(jsonResponse, { status: httpStatusCode });
   } catch (error) {
     console.error("Failed to create PayPal setup token:", error);

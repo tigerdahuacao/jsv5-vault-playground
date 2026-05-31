@@ -157,7 +157,7 @@ export async function generateClientToken(): Promise<string | undefined> {
   }
 }
 
-export async function createSetupTokenSavePayPal(): Promise<{
+export async function createSetupTokenSavePayPal(permitMultiplePaymentTokens = false): Promise<{
   jsonResponse: Record<string, unknown>;
   httpStatusCode: number;
 }> {
@@ -177,7 +177,7 @@ export async function createSetupTokenSavePayPal(): Promise<{
             country_code: "US",
           },
         },
-        permit_multiple_payment_tokens: false,
+        permit_multiple_payment_tokens: permitMultiplePaymentTokens,
         usage_pattern: "IMMEDIATE",
         usage_type: "MERCHANT",
         customer_type: "CONSUMER",
@@ -192,6 +192,8 @@ export async function createSetupTokenSavePayPal(): Promise<{
       },
     },
   };
+
+  console.log("[Save PayPal Setup Token API]:", JSON.stringify(payload, null, 2));
 
   const response = await fetch(url, {
     headers: buildHeaders(),
@@ -220,6 +222,8 @@ export async function createSetupTokenSaveCard(): Promise<{
     },
   };
 
+  console.log("[Save Card Setup Token API]:", JSON.stringify(payload, null, 2));
+
   const response = await fetch(url, {
     headers: buildHeaders(),
     method: "POST",
@@ -236,6 +240,7 @@ export async function createPaymentToken(
     payment_source: { token: { id: token_id, type: "SETUP_TOKEN" } },
   };
 
+  console.log("[Create Payment Token API]:", JSON.stringify(payload, null, 2));
   const response = await fetch(url, {
     headers: buildHeaders(),
     method: "POST",
