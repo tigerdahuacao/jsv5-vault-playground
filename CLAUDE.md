@@ -19,11 +19,11 @@ Next.js 16 App Router — TypeScript, Tailwind CSS v4, pnpm. All pages are Clien
 | Route | File | Purpose |
 |---|---|---|
 | `/` | `src/app/page.tsx` | Dashboard — flow selector, client config |
-| `/checkout_ACDC` | `src/app/checkout_ACDC/page.tsx` | Card (ACDC) checkout with vault |
-| `/checkout_PayPal` | `src/app/checkout_PayPal/page.tsx` | PayPal Smart Button with vault |
-| `/checkout_API` | `src/app/checkout_API/page.tsx` | 4-step raw API vault demo |
-| `/save_card` | `src/app/save_card/page.tsx` | Save card without purchase |
-| `/save_paypal` | `src/app/save_paypal/page.tsx` | Save PayPal without purchase |
+| `/checkout-ACDC` | `src/app/checkout-ACDC/page.tsx` | Card (ACDC) checkout with vault |
+| `/checkout-PayPal` | `src/app/checkout-PayPal/page.tsx` | PayPal Smart Button with vault |
+| `/checkout-API` | `src/app/checkout-API/page.tsx` | 4-step raw API vault demo |
+| `/save-card` | `src/app/save-card/page.tsx` | Save card without purchase |
+| `/save-PayPal` | `src/app/save-PayPal/page.tsx` | Save PayPal without purchase |
 
 **API Routes:**
 

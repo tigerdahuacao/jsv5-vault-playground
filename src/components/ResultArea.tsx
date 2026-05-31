@@ -12,11 +12,11 @@
  * - type: "success" | "error" | "info" | "idle"，控制颜色和标签
  *
  * 使用位置：
- * - src/app/checkout_ACDC/page.tsx
- * - src/app/checkout_PayPal/page.tsx
- * - src/app/checkout_API/page.tsx
- * - src/app/save_card/page.tsx
- * - src/app/save_paypal/page.tsx
+ * - src/app/checkout-ACDC/page.tsx
+ * - src/app/checkout-PayPal/page.tsx
+ * - src/app/checkout-API/page.tsx
+ * - src/app/save-card/page.tsx
+ * - src/app/save-PayPal/page.tsx
  */
 
 import { useState } from "react";

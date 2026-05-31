@@ -8,8 +8,8 @@
  *
  * 使用位置：
  * - src/app/page.tsx（首页，全局常驻展示）
- * - src/app/checkout_ACDC/page.tsx（ACDC 结账页，SDK 加载后才显示）
- * - src/app/save_card/page.tsx（保存卡页）
+ * - src/app/checkout-ACDC/page.tsx（ACDC 结账页，SDK 加载后才显示）
+ * - src/app/save-card/page.tsx（保存卡页）
  */
 
 import { useState } from "react";

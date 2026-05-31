@@ -125,7 +125,7 @@ function SaveCardContent() {
             ref={vaultRef}
             model={model}
             isUsePaypalAuthAssertion={isAuth}
-            route="save_card"
+            route="save-card"
             showVaultOption={false}
             showOrderAmount={false}
             onInitDataLoaded={handleInitLoaded}

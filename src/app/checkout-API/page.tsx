@@ -257,7 +257,7 @@ function CheckoutAPIContent() {
             ref={vaultRef}
             model={model}
             isUsePaypalAuthAssertion={isAuth}
-            route="checkout_API"
+            route="checkout-API"
             showVaultOption={false}
             showOrderAmount={false}
             onInitDataLoaded={handleInitLoaded}

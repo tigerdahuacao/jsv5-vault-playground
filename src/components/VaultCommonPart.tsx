@@ -14,7 +14,7 @@
  * 父组件在 createOrder 时调用以获取最新的 customerId / vaultId / useVault / orderAmount。
  *
  * 流程类型（flowType）由 route prop 自动推导：
- * - "checkout_PayPal" / "save_paypal" → "paypal"
+ * - "checkout-PayPal" / "save-PayPal" → "paypal"
  * - 其余 → "card"
  * 用于从 Zustand store 读取对应的 customerID / vaultID，避免 card 和 paypal 数据互串。
  *
@@ -27,11 +27,11 @@
  * - onInitDataLoaded: init 完成后的回调，父组件用来触发 SDK 加载
  *
  * 使用位置：
- * - src/app/checkout_ACDC/page.tsx
- * - src/app/checkout_PayPal/page.tsx
- * - src/app/checkout_API/page.tsx
- * - src/app/save_card/page.tsx
- * - src/app/save_paypal/page.tsx
+ * - src/app/checkout-ACDC/page.tsx
+ * - src/app/checkout-PayPal/page.tsx
+ * - src/app/checkout-API/page.tsx
+ * - src/app/save-card/page.tsx
+ * - src/app/save-PayPal/page.tsx
  */
 
 import {
@@ -94,7 +94,7 @@ const VaultCommonPart = forwardRef<VaultCommonPartRef, VaultCommonPartProps>(
 
     const appTag = isUsePaypalAuthAssertion ? thirdPartyApp : firstPartyApp;
     const partyData = isUsePaypalAuthAssertion ? thirdParty : firstParty;
-    const flowType: FlowType = ["checkout_PayPal", "save_paypal"].includes(route) ? "paypal" : "card";
+    const flowType: FlowType = ["checkout-PayPal", "save-PayPal"].includes(route) ? "paypal" : "card";
     const flowData = partyData[flowType];
 
     const [initData, setInitData] = useState<VaultInitData | null>(null);

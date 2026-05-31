@@ -26,8 +26,10 @@ function CheckoutACDCContent() {
   const initDataRef = useRef<VaultInitData | null>(null);
   const [isVaultSave, setIsVaultSave] = useState(false);
   const [isWith3DS, setIsWith3DS] = useState(false);
+  const [permitMultipleTokens, setPermitMultipleTokens] = useState(false);
   const isVaultSaveRef = useRef(false);
   const isWith3DSRef = useRef(false);
+  const permitMultipleTokensRef = useRef(false);
   const [resultMsg, setResultMsg] = useState("Waiting for payment...");
   const [resultType, setResultType] = useState<ResultType>("idle");
   const [isLoading, setIsLoading] = useState(false);
@@ -39,6 +41,7 @@ function CheckoutACDCContent() {
   // Keep refs in sync so createOrderCallback reads latest values without being recreated
   useEffect(() => { isVaultSaveRef.current = isVaultSave; }, [isVaultSave]);
   useEffect(() => { isWith3DSRef.current = isWith3DS; }, [isWith3DS]);
+  useEffect(() => { permitMultipleTokensRef.current = permitMultipleTokens; }, [permitMultipleTokens]);
 
   const showResult = useCallback((msg: string, type: ResultType) => {
     setResultMsg(msg);
@@ -75,7 +78,7 @@ function CheckoutACDCContent() {
             }
           })
           .catch((err) => {
-            console.warn("[checkout_ACDC] Failed to fetch saved card details:", err);
+            console.warn("[checkout-ACDC] Failed to fetch saved card details:", err);
           });
       }
     },
@@ -104,7 +107,10 @@ function CheckoutACDCContent() {
       .attributes as Record<string, unknown>;
 
     if (isVaultSaveRef.current && !useVault) {
-      cardAttrs["vault"] = { store_in_vault: "ON_SUCCESS" };
+      cardAttrs["vault"] = {
+        store_in_vault: "ON_SUCCESS",
+        ...(permitMultipleTokensRef.current ? { permit_multiple_payment_tokens: true } : {}),
+      };
     }
     if (isWith3DSRef.current) {
       cardAttrs["verification"] = { method: "SCA_ALWAYS" };
@@ -251,7 +257,7 @@ function CheckoutACDCContent() {
             ref={vaultRef}
             model={model}
             isUsePaypalAuthAssertion={isAuth}
-            route="checkout_ACDC"
+            route="checkout-ACDC"
             showVaultOption={true}
             showOrderAmount={true}
             onInitDataLoaded={handleInitLoaded}
@@ -292,6 +298,15 @@ function CheckoutACDCContent() {
               description={isWith3DS ? "Disabled — 3DS needs interaction" : "Show mask while processing"}
               activeColor="blue"
               disabled={isWith3DS}
+            />
+            <ToggleOption
+              id="permit_multiple_tokens"
+              checked={permitMultipleTokens}
+              onChange={setPermitMultipleTokens}
+              label="Multiple Payment Tokens"
+              description="permit_multiple_payment_tokens"
+              activeColor="blue"
+              disabled={!isVaultSave || !isFirstTime}
             />
           </div>
         </div>

@@ -22,8 +22,11 @@ function CheckoutPayPalContent() {
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
   const initDataRef = useRef<VaultInitData | null>(null);
+  const [permitMultipleTokens, setPermitMultipleTokens] = useState(false);
+  const permitMultipleTokensRef = useRef(false);
   const [resultMsg, setResultMsg] = useState("Waiting for payment...");
   const [resultType, setResultType] = useState<ResultType>("idle");
+  useEffect(() => { permitMultipleTokensRef.current = permitMultipleTokens; }, [permitMultipleTokens]);
 
   const showResult = useCallback((msg: string, type: ResultType) => {
     setResultMsg(msg);
@@ -58,12 +61,18 @@ function CheckoutPayPalContent() {
       body: JSON.stringify({ isVaultSave: true, isCard: false }),
     });
 
+    const vaultAttr = useVault
+      ? undefined
+      : {
+          store_in_vault: "ON_SUCCESS",
+          usage_type: "MERCHANT",
+          ...(permitMultipleTokensRef.current ? { permit_multiple_payment_tokens: true } : {}),
+        };
+
     const payment_source: Record<string, unknown> = {
       paypal: {
         attributes: {
-          vault: useVault
-            ? undefined
-            : { store_in_vault: "ON_SUCCESS", usage_type: "MERCHANT" },
+          vault: vaultAttr,
           customer: customerId ? { id: customerId } : undefined,
         },
         experience_context: {
@@ -186,11 +195,28 @@ function CheckoutPayPalContent() {
             ref={vaultRef}
             model={model}
             isUsePaypalAuthAssertion={isAuth}
-            route="checkout_PayPal"
+            route="checkout-PayPal"
             showVaultOption={true}
             showOrderAmount={true}
             onInitDataLoaded={handleInitLoaded}
           />
+        </div>
+
+        {/* Payment Options */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 space-y-4">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            Payment Options
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <ToggleOption
+              id="permit_multiple_tokens"
+              checked={permitMultipleTokens}
+              onChange={setPermitMultipleTokens}
+              label="Multiple Payment Tokens"
+              description="permit_multiple_payment_tokens"
+              activeColor="blue"
+            />
+          </div>
         </div>
 
         {/* PayPal Button */}
@@ -212,6 +238,64 @@ function CheckoutPayPalContent() {
         <ResultArea message={resultMsg} type={resultType} />
       </div>
     </main>
+  );
+}
+
+function ToggleOption({
+  id,
+  checked,
+  onChange,
+  label,
+  description,
+  activeColor,
+  disabled = false,
+}: {
+  id: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+  description: string;
+  activeColor: "blue" | "violet";
+  disabled?: boolean;
+}) {
+  const active = { blue: "border-blue-500 bg-blue-50", violet: "border-violet-500 bg-violet-50" };
+  const dot = { blue: "bg-blue-500", violet: "bg-violet-500" };
+  const text = { blue: "text-blue-700", violet: "text-violet-700" };
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        "flex-1 flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all duration-200",
+        disabled
+          ? "border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
+          : cn("cursor-pointer", checked ? active[activeColor] : "border-slate-200 bg-white hover:border-slate-300")
+      )}
+    >
+      <input
+        type="checkbox"
+        id={id}
+        checked={checked}
+        onChange={(e) => !disabled && onChange(e.target.checked)}
+        disabled={disabled}
+        className="sr-only"
+      />
+      <div
+        className={cn(
+          "w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all",
+          checked ? `${dot[activeColor]} border-transparent` : "border-slate-300"
+        )}
+      >
+        {checked && (
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        )}
+      </div>
+      <div>
+        <p className={cn("text-sm font-semibold", checked ? text[activeColor] : "text-slate-700")}>{label}</p>
+        <p className="text-xs text-slate-400">{description}</p>
+      </div>
+    </label>
   );
 }
 
