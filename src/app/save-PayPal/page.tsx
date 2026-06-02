@@ -23,9 +23,12 @@ function SavePayPalContent() {
   const initDataRef = useRef<VaultInitData | null>(null);
   const [permitMultipleTokens, setPermitMultipleTokens] = useState(false);
   const permitMultipleTokensRef = useRef(false);
+  const [merchantCustomerId, setMerchantCustomerId] = useState("");
+  const merchantCustomerIdRef = useRef("");
   const [resultMsg, setResultMsg] = useState("Waiting...");
   const [resultType, setResultType] = useState<ResultType>("idle");
   useEffect(() => { permitMultipleTokensRef.current = permitMultipleTokens; }, [permitMultipleTokens]);
+  useEffect(() => { merchantCustomerIdRef.current = merchantCustomerId; }, [merchantCustomerId]);
 
   const showResult = useCallback((msg: string, type: ResultType) => {
     setResultMsg(msg);
@@ -51,6 +54,9 @@ function SavePayPalContent() {
     if (!initDataRef.current) return "";
     const params = new URLSearchParams();
     if (permitMultipleTokensRef.current) params.set("permit_multiple_payment_tokens", "true");
+    if (merchantCustomerIdRef.current) {
+      params.set("merchant_customer_id", merchantCustomerIdRef.current);
+    }
     const res = await fetch(`/api/vault/setup-token-paypal?${params}`, {
       headers: buildPayPalHeaders(initDataRef.current),
     });
@@ -130,6 +136,26 @@ function SavePayPalContent() {
               label="Multiple Payment Tokens"
               description="permit_multiple_payment_tokens"
               activeColor="blue"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 pt-2">
+            <label
+              htmlFor="merchant_customer_id"
+              className="text-xs font-semibold text-slate-500 uppercase tracking-wider"
+            >
+              Merchant Customer ID
+              <span className="ml-2 normal-case font-normal text-slate-400">
+                (optional · payment_source.paypal.customer.merchant_customer_id)
+              </span>
+            </label>
+            <input
+              id="merchant_customer_id"
+              type="text"
+              value={merchantCustomerId}
+              onChange={(e) => setMerchantCustomerId(e.target.value)}
+              placeholder="Your own customer identifier (free text)"
+              className="w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
+                focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
             />
           </div>
         </div>

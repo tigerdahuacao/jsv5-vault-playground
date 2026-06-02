@@ -27,9 +27,11 @@ function CheckoutACDCContent() {
   const [isVaultSave, setIsVaultSave] = useState(false);
   const [isWith3DS, setIsWith3DS] = useState(false);
   const [permitMultipleTokens, setPermitMultipleTokens] = useState(false);
+  const [merchantCustomerId, setMerchantCustomerId] = useState("");
   const isVaultSaveRef = useRef(false);
   const isWith3DSRef = useRef(false);
   const permitMultipleTokensRef = useRef(false);
+  const merchantCustomerIdRef = useRef("");
   const [resultMsg, setResultMsg] = useState("Waiting for payment...");
   const [resultType, setResultType] = useState<ResultType>("idle");
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +44,7 @@ function CheckoutACDCContent() {
   useEffect(() => { isVaultSaveRef.current = isVaultSave; }, [isVaultSave]);
   useEffect(() => { isWith3DSRef.current = isWith3DS; }, [isWith3DS]);
   useEffect(() => { permitMultipleTokensRef.current = permitMultipleTokens; }, [permitMultipleTokens]);
+  useEffect(() => { merchantCustomerIdRef.current = merchantCustomerId; }, [merchantCustomerId]);
 
   const showResult = useCallback((msg: string, type: ResultType) => {
     setResultMsg(msg);
@@ -115,8 +118,12 @@ function CheckoutACDCContent() {
     if (isWith3DSRef.current) {
       cardAttrs["verification"] = { method: "SCA_ALWAYS" };
     }
-    if (customerId) {
-      cardAttrs["customer"] = { id: customerId };
+    const merchantCustomerId = merchantCustomerIdRef.current;
+    if (customerId || merchantCustomerId) {
+      const customer: Record<string, string> = {};
+      if (customerId) customer.id = customerId;
+      if (merchantCustomerId) customer.merchant_customer_id = merchantCustomerId;
+      cardAttrs["customer"] = customer;
     }
     if (useVault && vaultId) {
       (payment_source.card as Record<string, unknown>)["vault_id"] = vaultId;
@@ -309,6 +316,28 @@ function CheckoutACDCContent() {
               disabled={!isVaultSave || !isFirstTime}
             />
           </div>
+          {isFirstTime && (
+            <div className="flex flex-col gap-1.5 pt-2">
+              <label
+                htmlFor="merchant_customer_id"
+                className="text-xs font-semibold text-slate-500 uppercase tracking-wider"
+              >
+                Merchant Customer ID
+                <span className="ml-2 normal-case font-normal text-slate-400">
+                  (optional · payment_source.card.attributes.customer.merchant_customer_id)
+                </span>
+              </label>
+              <input
+                id="merchant_customer_id"
+                type="text"
+                value={merchantCustomerId}
+                onChange={(e) => setMerchantCustomerId(e.target.value)}
+                placeholder="Your own customer identifier (free text)"
+                className="w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
+                  focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
+              />
+            </div>
+          )}
         </div>
 
         {/* Saved card info — returning buyer only */}

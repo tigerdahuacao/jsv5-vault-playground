@@ -22,6 +22,9 @@ function SaveCardContent() {
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
   const initDataRef = useRef<VaultInitData | null>(null);
+  const [merchantCustomerId, setMerchantCustomerId] = useState("");
+  const merchantCustomerIdRef = useRef("");
+  useEffect(() => { merchantCustomerIdRef.current = merchantCustomerId; }, [merchantCustomerId]);
   const [resultMsg, setResultMsg] = useState("Waiting...");
   const [resultType, setResultType] = useState<ResultType>("idle");
   const showResult = useCallback((msg: string, type: ResultType) => {
@@ -47,9 +50,15 @@ function SaveCardContent() {
   const createVaultSetupToken = useCallback(async () => {
     showResult("Creating setup token...", "info");
     if (!initDataRef.current) return "";
-    const res = await fetch("/api/vault/setup-token-card", {
-      headers: buildPayPalHeaders(initDataRef.current),
-    });
+    const params = new URLSearchParams();
+    if (merchantCustomerIdRef.current) {
+      params.set("merchant_customer_id", merchantCustomerIdRef.current);
+    }
+    const qs = params.toString();
+    const res = await fetch(
+      `/api/vault/setup-token-card${qs ? `?${qs}` : ""}`,
+      { headers: buildPayPalHeaders(initDataRef.current) }
+    );
     const data = await res.json();
     return data.id;
   }, [showResult]);
@@ -130,6 +139,33 @@ function SaveCardContent() {
             showOrderAmount={false}
             onInitDataLoaded={handleInitLoaded}
           />
+        </div>
+
+        {/* Payment Options */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 space-y-4">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            Payment Options
+          </h2>
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="merchant_customer_id"
+              className="text-xs font-semibold text-slate-500 uppercase tracking-wider"
+            >
+              Merchant Customer ID
+              <span className="ml-2 normal-case font-normal text-slate-400">
+                (optional · payment_source.card.customer.merchant_customer_id)
+              </span>
+            </label>
+            <input
+              id="merchant_customer_id"
+              type="text"
+              value={merchantCustomerId}
+              onChange={(e) => setMerchantCustomerId(e.target.value)}
+              placeholder="Your own customer identifier (free text)"
+              className="w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
+                focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
+            />
+          </div>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">

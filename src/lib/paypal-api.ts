@@ -157,41 +157,44 @@ export async function generateClientToken(): Promise<string | undefined> {
   }
 }
 
-export async function createSetupTokenSavePayPal(permitMultiplePaymentTokens = false): Promise<{
+export async function createSetupTokenSavePayPal(
+  permitMultiplePaymentTokens = false,
+  merchantCustomerId = ""
+): Promise<{
   jsonResponse: Record<string, unknown>;
   httpStatusCode: number;
 }> {
   const url = `${base}/v3/vault/setup-tokens`;
-  const payload = {
-    payment_source: {
-      paypal: {
-        description: "Description for PayPal to be shown to PayPal payer",
-        shipping: {
-          name: { full_name: "Firstname Lastname" },
-          address: {
-            address_line_1: "2211 N First Street",
-            address_line_2: "Building 17",
-            admin_area_2: "San Jose",
-            admin_area_1: "CA",
-            postal_code: "95131",
-            country_code: "US",
-          },
-        },
-        permit_multiple_payment_tokens: permitMultiplePaymentTokens,
-        usage_pattern: "IMMEDIATE",
-        usage_type: "MERCHANT",
-        customer_type: "CONSUMER",
-        experience_context: {
-          shipping_preference: "SET_PROVIDED_ADDRESS",
-          payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
-          brand_name: "EXAMPLE INC",
-          locale: "en-US",
-          return_url: "https://example.com/returnUrl",
-          cancel_url: "https://example.com/cancelUrl",
-        },
+  const paypalSource: Record<string, unknown> = {
+    description: "Description for PayPal to be shown to PayPal payer",
+    shipping: {
+      name: { full_name: "Firstname Lastname" },
+      address: {
+        address_line_1: "2211 N First Street",
+        address_line_2: "Building 17",
+        admin_area_2: "San Jose",
+        admin_area_1: "CA",
+        postal_code: "95131",
+        country_code: "US",
       },
     },
+    permit_multiple_payment_tokens: permitMultiplePaymentTokens,
+    usage_pattern: "IMMEDIATE",
+    usage_type: "MERCHANT",
+    customer_type: "CONSUMER",
+    experience_context: {
+      shipping_preference: "SET_PROVIDED_ADDRESS",
+      payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
+      brand_name: "EXAMPLE INC",
+      locale: "en-US",
+      return_url: "https://example.com/returnUrl",
+      cancel_url: "https://example.com/cancelUrl",
+    },
   };
+  if (merchantCustomerId) {
+    paypalSource.customer = { merchant_customer_id: merchantCustomerId };
+  }
+  const payload = { payment_source: { paypal: paypalSource } };
 
   console.log("[Save PayPal Setup Token API]:", JSON.stringify(payload, null, 2));
 
@@ -203,24 +206,26 @@ export async function createSetupTokenSavePayPal(permitMultiplePaymentTokens = f
   return handleResponse(response);
 }
 
-export async function createSetupTokenSaveCard(): Promise<{
+export async function createSetupTokenSaveCard(
+  merchantCustomerId = ""
+): Promise<{
   jsonResponse: Record<string, unknown>;
   httpStatusCode: number;
 }> {
   const url = `${base}/v3/vault/setup-tokens`;
-  const payload = {
-    payment_source: {
-      card: {
-        verification_method: "SCA_ALWAYS",
-        experience_context: {
-          brand_name: "GMS Rocks",
-          locale: "de-DE",
-          return_url: "https://example.com/returnUrl",
-          cancel_url: "https://example.com/cancelUrl",
-        },
-      },
+  const cardSource: Record<string, unknown> = {
+    verification_method: "SCA_ALWAYS",
+    experience_context: {
+      brand_name: "GMS Rocks",
+      locale: "de-DE",
+      return_url: "https://example.com/returnUrl",
+      cancel_url: "https://example.com/cancelUrl",
     },
   };
+  if (merchantCustomerId) {
+    cardSource.customer = { merchant_customer_id: merchantCustomerId };
+  }
+  const payload = { payment_source: { card: cardSource } };
 
   console.log("[Save Card Setup Token API]:", JSON.stringify(payload, null, 2));
 

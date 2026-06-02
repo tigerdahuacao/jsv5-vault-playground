@@ -24,9 +24,14 @@ function CheckoutPayPalContent() {
   const initDataRef = useRef<VaultInitData | null>(null);
   const [permitMultipleTokens, setPermitMultipleTokens] = useState(false);
   const permitMultipleTokensRef = useRef(false);
+  const [merchantCustomerId, setMerchantCustomerId] = useState("");
+  const merchantCustomerIdRef = useRef("");
   const [resultMsg, setResultMsg] = useState("Waiting for payment...");
   const [resultType, setResultType] = useState<ResultType>("idle");
   useEffect(() => { permitMultipleTokensRef.current = permitMultipleTokens; }, [permitMultipleTokens]);
+  useEffect(() => { merchantCustomerIdRef.current = merchantCustomerId; }, [merchantCustomerId]);
+
+  const isFirstTime = model === "firstTime";
 
   const showResult = useCallback((msg: string, type: ResultType) => {
     setResultMsg(msg);
@@ -69,11 +74,16 @@ function CheckoutPayPalContent() {
           ...(permitMultipleTokensRef.current ? { permit_multiple_payment_tokens: true } : {}),
         };
 
+    const merchantCustomerId = merchantCustomerIdRef.current;
+    const customer: Record<string, string> = {};
+    if (customerId) customer.id = customerId;
+    if (merchantCustomerId) customer.merchant_customer_id = merchantCustomerId;
+
     const payment_source: Record<string, unknown> = {
       paypal: {
         attributes: {
           vault: vaultAttr,
-          customer: customerId ? { id: customerId } : undefined,
+          customer: Object.keys(customer).length > 0 ? customer : undefined,
         },
         experience_context: {
           shipping_preference: "NO_SHIPPING",
@@ -217,6 +227,28 @@ function CheckoutPayPalContent() {
               activeColor="blue"
             />
           </div>
+          {isFirstTime && (
+            <div className="flex flex-col gap-1.5 pt-2">
+              <label
+                htmlFor="merchant_customer_id"
+                className="text-xs font-semibold text-slate-500 uppercase tracking-wider"
+              >
+                Merchant Customer ID
+                <span className="ml-2 normal-case font-normal text-slate-400">
+                  (optional · payment_source.paypal.attributes.customer.merchant_customer_id)
+                </span>
+              </label>
+              <input
+                id="merchant_customer_id"
+                type="text"
+                value={merchantCustomerId}
+                onChange={(e) => setMerchantCustomerId(e.target.value)}
+                placeholder="Your own customer identifier (free text)"
+                className="w-full rounded-lg border-2 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
+                  focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
+              />
+            </div>
+          )}
         </div>
 
         {/* PayPal Button */}

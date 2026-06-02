@@ -11,7 +11,10 @@ export async function GET(request: NextRequest) {
     request.headers.get("x-paypal-access-token") || ""
   );
   try {
-    const { jsonResponse, httpStatusCode } = await createSetupTokenSaveCard();
+    const merchantCustomerId =
+      request.nextUrl.searchParams.get("merchant_customer_id") || "";
+    const { jsonResponse, httpStatusCode } =
+      await createSetupTokenSaveCard(merchantCustomerId);
     return NextResponse.json(jsonResponse, { status: httpStatusCode });
   } catch (error) {
     console.error("Failed to create card setup token:", error);
