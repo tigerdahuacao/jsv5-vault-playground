@@ -28,7 +28,7 @@ export function usePaypalSdk({ components, extraParams = "", onError }: UsePaypa
   const destroySdk = useCallback(() => {
     // 1. Close active CardFields instance before touching the script/iframes
     if (cardFieldInstanceRef.current?.close) {
-      try { cardFieldInstanceRef.current.close(); } catch (_) {}
+      try { cardFieldInstanceRef.current.close(); } catch (_) { }
     }
     cardFieldInstanceRef.current = null;
 
@@ -68,6 +68,7 @@ export function usePaypalSdk({ components, extraParams = "", onError }: UsePaypa
     script.id = "paypal-sdk-script";
     script.src = `https://www.paypal.com/sdk/js?client-id=${data.clientId}&components=${components}&currency=USD${extraParams}`;
     if (data.id_token) {
+      console.log("data-user-id-token:", data.id_token)
       script.setAttribute("data-user-id-token", data.id_token);
     }
     script.onload = () => {
