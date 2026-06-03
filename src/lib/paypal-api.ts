@@ -91,11 +91,22 @@ async function handleResponse(
   }
 }
 
-export async function generateToken(): Promise<{
+export interface GenerateTokenParams {
+  clientId: string;
+  secret: string;
+  vaultModel: string;
+  customerId: string;
+  merchantId: string;
+  isUseAuthAssertion: boolean;
+}
+
+export async function generateToken(params: GenerateTokenParams): Promise<{
   access_token: string;
   id_token: string;
 }> {
-  if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+  const { clientId, secret, vaultModel, customerId, merchantId, isUseAuthAssertion } = params;
+
+  if (!clientId || !secret) {
     throw new Error("MISSING_API_CREDENTIALS");
   }
 
@@ -104,19 +115,17 @@ export async function generateToken(): Promise<{
     response_type: "id_token",
   };
 
-  const auth = Buffer.from(
-    PAYPAL_CLIENT_ID + ":" + PAYPAL_CLIENT_SECRET
-  ).toString("base64");
+  const auth = Buffer.from(clientId + ":" + secret).toString("base64");
   const headers: Record<string, string> = {
     Authorization: `Basic ${auth}`,
   };
 
-  if (VAULT_MODEL === "returning") {
-    requestBody["target_customer_id"] = CUSTOMER_ID;
-    if (is_use_PAYPAL_AUTH_ASSERTION) {
+  if (vaultModel === "returning") {
+    requestBody["target_customer_id"] = customerId;
+    if (isUseAuthAssertion) {
       headers["PayPal-Auth-Assertion"] = generatePayPalAuthAssertion(
-        PAYPAL_CLIENT_ID,
-        TEST_MERCHANT_ID
+        clientId,
+        merchantId
       );
     }
   }
@@ -136,15 +145,18 @@ export async function generateToken(): Promise<{
 }
 
 // Deprecated but kept to avoid breaking flows
-export async function generateClientToken(): Promise<string | undefined> {
+export async function generateClientToken(params: {
+  clientId: string;
+  secret: string;
+  customerId: string;
+}): Promise<string | undefined> {
   try {
-    if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) return undefined;
-    const auth = Buffer.from(
-      PAYPAL_CLIENT_ID + ":" + PAYPAL_CLIENT_SECRET
-    ).toString("base64");
+    const { clientId, secret, customerId } = params;
+    if (!clientId || !secret) return undefined;
+    const auth = Buffer.from(clientId + ":" + secret).toString("base64");
     const response = await fetch(`${base}/v1/identity/generate-token`, {
       method: "POST",
-      body: JSON.stringify({ customer_id: CUSTOMER_ID }),
+      body: JSON.stringify({ customer_id: customerId }),
       headers: {
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/json",

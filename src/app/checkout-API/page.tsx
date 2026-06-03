@@ -61,10 +61,6 @@ function CheckoutAPIContent() {
   const handleInitLoaded = useCallback((data: VaultInitData) => {
     setInitData(data);
     initDataRef.current = data;
-    // Pre-initialize vault API access (no SDK needed for API flow)
-    fetch(
-      `/api/vault/init?model=${data.VAULT_MODEL}&is_use_PAYPAL_AUTH_ASSERTION=${data.is_use_PAYPAL_AUTH_ASSERTION}`
-    ).catch(() => {});
   }, []);
 
   // Step 1 — Create setup token for card

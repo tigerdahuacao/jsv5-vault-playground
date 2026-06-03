@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  initClientIDSecret,
-  initVaultInfo,
-  generateToken,
-  generateClientToken,
-} from "@/lib/paypal-api";
+import { generateToken, generateClientToken } from "@/lib/paypal-api";
 import { clientIDConfigs, testCard } from "@/lib/config";
 
 export const runtime = "edge";
@@ -21,29 +16,25 @@ export async function GET(request: NextRequest) {
     const merchantID = searchParams.get("merchantID") || "";
     const route = searchParams.get("route") || "";
 
-    let PAYPAL_CLIENT_ID: string;
-    let PAYPAL_CLIENT_SECRET: string;
+    const entry = is_use_PAYPAL_AUTH_ASSERTION
+      ? clientIDConfigs.thirdParty[appTag]
+      : clientIDConfigs.firstParty[appTag];
+    const PAYPAL_CLIENT_ID = entry?.clientID || "";
+    const PAYPAL_CLIENT_SECRET = entry?.secret || "";
 
-    if (is_use_PAYPAL_AUTH_ASSERTION) {
-      const entry = clientIDConfigs.thirdParty[appTag];
-      PAYPAL_CLIENT_ID = entry?.clientID || "";
-      PAYPAL_CLIENT_SECRET = entry?.secret || "";
-    } else {
-      const entry = clientIDConfigs.firstParty[appTag];
-      PAYPAL_CLIENT_ID = entry?.clientID || "";
-      PAYPAL_CLIENT_SECRET = entry?.secret || "";
-    }
-
-    initClientIDSecret(
-      PAYPAL_CLIENT_ID,
-      PAYPAL_CLIENT_SECRET,
-      merchantID,
-      is_use_PAYPAL_AUTH_ASSERTION
-    );
-    initVaultInfo(vault_model, vaultID, customerID);
-
-    await generateClientToken();
-    const { id_token, access_token } = await generateToken();
+    await generateClientToken({
+      clientId: PAYPAL_CLIENT_ID,
+      secret: PAYPAL_CLIENT_SECRET,
+      customerId: customerID,
+    });
+    const { id_token, access_token } = await generateToken({
+      clientId: PAYPAL_CLIENT_ID,
+      secret: PAYPAL_CLIENT_SECRET,
+      vaultModel: vault_model,
+      customerId: customerID,
+      merchantId: merchantID,
+      isUseAuthAssertion: is_use_PAYPAL_AUTH_ASSERTION,
+    });
 
     return NextResponse.json({
       clientId: PAYPAL_CLIENT_ID,
