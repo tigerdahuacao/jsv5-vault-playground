@@ -276,7 +276,7 @@ function CheckoutACDCContent() {
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
             Payment Options
           </h2>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <ToggleOption
               id="save_2_vault"
               checked={isVaultSave}
@@ -533,11 +533,11 @@ function ToggleOption({
           </svg>
         )}
       </div>
-      <div>
-        <p className={cn("text-sm font-semibold", checked ? text[activeColor] : "text-slate-700")}>
+      <div className="flex-1 min-w-0">
+        <p className={cn("text-sm font-semibold break-words", checked ? text[activeColor] : "text-slate-700")}>
           {label}
         </p>
-        <p className="text-xs text-slate-400">{description}</p>
+        <p className="text-xs text-slate-400 break-words">{description}</p>
       </div>
     </label>
   );
