@@ -79,6 +79,12 @@ export const clientIDConfigs: {
       secret:
         "EGenIIE-uz9QYAtzRILRFWyCn6kYwuT6FfJ9yzlr_DUfODN43ba2zXOkYfNzxmRF2gDALL4rfoYakYMS",
     },
+    "megan-2026-10-16": {
+      clientID:
+        "AQdC3FU2lTXiZHva636HB4XaLgzyvqEP5_sNszbo2pdUf9KQJumEyHbtSn_GiacGuC9cZ9AdX4Ws17IG",
+      secret:
+        "EMzRn9EB0XJiFa40Z_RHKetqmNgDXS9x0E747addQk-fHP1znpC1xU2uuhklpAQ7wAFYVZcC7hewidRk",
+    },
   },
 };
 
