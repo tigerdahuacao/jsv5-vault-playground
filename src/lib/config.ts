@@ -1,7 +1,7 @@
 // Mirror of config/default.json — centralised config for the Next.js app
 
 export const testCard = {
-  PAYPAL_TEST_CARD_NO: "4111111111111111",
+  PAYPAL_TEST_CARD_NO: "4012000033330026",
   PAYPAL_TEST_CARD_DATE: "12/2027",
   PAYPAL_TEST_CARD_CVV: "123",
 };
