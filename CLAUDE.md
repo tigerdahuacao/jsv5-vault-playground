@@ -68,6 +68,12 @@ document.head.appendChild(script);
 
 Card Fields / Buttons are initialized in a `useEffect` that depends on `sdkReady`.
 
+## Deployment (Cloudflare Pages)
+
+Build command is `npx @cloudflare/next-on-pages@1`, which fetches `@cloudflare/next-on-pages` and `wrangler` at their latest versions on every build (not pinned in this repo's `package.json`). This means a build can start failing with an `ERESOLVE` peer-dependency conflict (e.g. `wrangler`'s `@cloudflare/workers-types` peer range vs. `next-on-pages`'s own peer range) purely from upstream version drift — with zero changes to this repo's source. Don't assume a CF Pages build failure was caused by the latest commit; check whether the failure is a dependency-resolution error unrelated to the diff before investigating app code.
+
+**Do not modify `package.json`, lockfiles, or add `.npmrc` (e.g. `legacy-peer-deps=true`) to work around a CF Pages build failure without explicit user approval first.** The user has asked to keep the dependency setup exactly as-is even when it causes an intermittent build failure — propose the fix and wait for confirmation rather than applying it.
+
 ## Two Merchant Models
 
 - **3rd Party** (`is_use_PAYPAL_AUTH_ASSERTION=true`): Adds `Paypal-Auth-Assertion` header; reads/writes `3rdParty.*` in DB.
