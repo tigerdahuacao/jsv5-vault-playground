@@ -13,6 +13,9 @@ import CardCopyInfo from "@/components/CardCopyInfo";
 import { useVaultStore } from "@/store/vault";
 import { cn } from "@/lib/utils";
 import { buildPayPalHeaders } from "@/lib/api-client";
+import ApiTraceLog from "@/components/ApiTraceLog";
+import { useApiTraceLog } from "@/hooks/useApiTraceLog";
+import { extractTrace } from "@/lib/api-trace";
 
 
 function CheckoutACDCContent() {
@@ -21,6 +24,7 @@ function CheckoutACDCContent() {
   const isAuth = searchParams.get("is_use_PAYPAL_AUTH_ASSERTION") === "true";
 
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
+  const { entries: traceEntries, pushTrace } = useApiTraceLog();
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
   const initDataRef = useRef<VaultInitData | null>(null);
@@ -62,6 +66,7 @@ function CheckoutACDCContent() {
     (data: VaultInitData) => {
       setInitData(data);
       initDataRef.current = data;
+      pushTrace(data.__trace || []);
       loadSdk(data);
       // Fetch saved card details for returning buyer
       if (model === "returning" && data.VAULT_ID) {
@@ -85,7 +90,7 @@ function CheckoutACDCContent() {
           });
       }
     },
-    [loadSdk, model]
+    [loadSdk, model, pushTrace]
   );
 
   const createOrderCallback = useCallback(async () => {
@@ -142,9 +147,10 @@ function CheckoutACDCContent() {
       headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
       body: JSON.stringify(body),
     });
-    const data = await res.json();
+    const { data, trace } = extractTrace(await res.json());
+    pushTrace(trace);
     return data.id;
-  }, []);
+  }, [pushTrace]);
 
   const onApproveCallback = useCallback(async (data: { orderID: string }) => {
     setIsLoading(true);
@@ -154,7 +160,8 @@ function CheckoutACDCContent() {
       method: "POST",
       headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
     });
-    const captureData = await res.json();
+    const { data: captureData, trace } = extractTrace(await res.json());
+    pushTrace(trace);
 
     if (captureData.status === "COMPLETED" || captureData.status === "ORDER_ALREADY_COMPLETED") {
       const capture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
@@ -172,7 +179,7 @@ function CheckoutACDCContent() {
       showResult(`Error: ${JSON.stringify(captureData, null, 2)}`, "error");
     }
     setIsLoading(false);
-  }, [showResult, isAuth, saveVaultResult]);
+  }, [showResult, isAuth, saveVaultResult, pushTrace]);
 
   // Initialize card fields once SDK is ready — skip for returning buyers (no card entry needed)
   useEffect(() => {
@@ -210,6 +217,8 @@ function CheckoutACDCContent() {
 
     // Returning buyer: pay directly with vault_id, no card entry needed
     if (useVault && payVaultId) {
+      if (isLoading) return;
+      setIsLoading(true);
       try {
         const orderId = await createOrderCallback();
         await onApproveCallback({ orderID: orderId });
@@ -373,14 +382,16 @@ function CheckoutACDCContent() {
             /* Returning buyer — pay directly with vaulted card */
             <button
               onClick={handlePay}
+              disabled={isLoading}
               className="w-full py-4 rounded-lg bg-emerald-600 hover:bg-emerald-700
                 text-white font-bold text-sm transition-all duration-150
-                flex items-center justify-center gap-2"
+                flex items-center justify-center gap-2
+                disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Pay with Saved Card
+              {isLoading ? "Processing..." : "Pay with Saved Card"}
             </button>
           ) : (
             <>
@@ -445,6 +456,9 @@ function CheckoutACDCContent() {
 
         {/* Result */}
         <ResultArea message={resultMsg} type={resultType} />
+
+        {/* API Trace */}
+        <ApiTraceLog entries={traceEntries} />
 
         {/* Transaction Details — shown after first-time vault save */}
         {isFirstTime && (txnId || customerId || vaultId) && (
