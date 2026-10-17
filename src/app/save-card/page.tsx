@@ -11,6 +11,9 @@ import ResultArea, { type ResultType } from "@/components/ResultArea";
 import CardCopyInfo from "@/components/CardCopyInfo";
 import { useVaultStore } from "@/store/vault";
 import { buildPayPalHeaders } from "@/lib/api-client";
+import ApiTraceLog from "@/components/ApiTraceLog";
+import { useApiTraceLog } from "@/hooks/useApiTraceLog";
+import { extractTrace } from "@/lib/api-trace";
 
 
 function SaveCardContent() {
@@ -19,6 +22,7 @@ function SaveCardContent() {
   const isAuth = searchParams.get("is_use_PAYPAL_AUTH_ASSERTION") === "true";
 
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
+  const { entries: traceEntries, pushTrace } = useApiTraceLog();
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
   const initDataRef = useRef<VaultInitData | null>(null);
@@ -42,9 +46,10 @@ function SaveCardContent() {
     (data: VaultInitData) => {
       setInitData(data);
       initDataRef.current = data;
+      pushTrace(data.__trace || []);
       loadSdk(data);
     },
-    [loadSdk]
+    [loadSdk, pushTrace]
   );
 
   const createVaultSetupToken = useCallback(async () => {
@@ -59,9 +64,10 @@ function SaveCardContent() {
       `/api/vault/setup-token-card${qs ? `?${qs}` : ""}`,
       { headers: buildPayPalHeaders(initDataRef.current) }
     );
-    const data = await res.json();
+    const { data, trace } = extractTrace(await res.json());
+    pushTrace(trace);
     return data.id;
-  }, [showResult]);
+  }, [showResult, pushTrace]);
 
   const onApprove = useCallback(
     async (data: { vaultSetupToken: string }) => {
@@ -71,7 +77,8 @@ function SaveCardContent() {
         `/api/vault/payment-token?token_id=${data.vaultSetupToken}`,
         { headers: buildPayPalHeaders(initDataRef.current) }
       );
-      const result = await res.json();
+      const { data: result, trace } = extractTrace(await res.json());
+      pushTrace(trace);
 
       const vaultId = result.id || "";
       const customerId = result.customer?.id || "";
@@ -81,7 +88,7 @@ function SaveCardContent() {
         "success"
       );
     },
-    [showResult, isAuth, saveVaultResult]
+    [showResult, isAuth, saveVaultResult, pushTrace]
   );
 
   useEffect(() => {
@@ -219,6 +226,8 @@ function SaveCardContent() {
         </div>
 
         <ResultArea message={resultMsg} type={resultType} />
+
+        <ApiTraceLog entries={traceEntries} />
 
         {initData && (
           <CardCopyInfo
