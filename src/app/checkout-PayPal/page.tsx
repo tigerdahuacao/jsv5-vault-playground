@@ -11,6 +11,9 @@ import ResultArea, { type ResultType } from "@/components/ResultArea";
 import { useVaultStore } from "@/store/vault";
 import { cn } from "@/lib/utils";
 import { buildPayPalHeaders } from "@/lib/api-client";
+import ApiTraceLog from "@/components/ApiTraceLog";
+import { useApiTraceLog } from "@/hooks/useApiTraceLog";
+import { extractTrace } from "@/lib/api-trace";
 
 
 function CheckoutPayPalContent() {
@@ -19,6 +22,7 @@ function CheckoutPayPalContent() {
   const isAuth = searchParams.get("is_use_PAYPAL_AUTH_ASSERTION") === "true";
 
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
+  const { entries: traceEntries, pushTrace } = useApiTraceLog();
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
   const initDataRef = useRef<VaultInitData | null>(null);
@@ -47,9 +51,10 @@ function CheckoutPayPalContent() {
     (data: VaultInitData) => {
       setInitData(data);
       initDataRef.current = data;
+      pushTrace(data.__trace || []);
       loadSdk(data);
     },
-    [loadSdk]
+    [loadSdk, pushTrace]
   );
 
   const createOrder = useCallback(async () => {
@@ -124,9 +129,10 @@ function CheckoutPayPalContent() {
       headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
       body: JSON.stringify(body),
     });
-    const data = await res.json();
+    const { data, trace } = extractTrace(await res.json());
+    pushTrace(trace);
     return data.id;
-  }, []);
+  }, [pushTrace]);
 
   const onApprove = useCallback(
     async (data: { orderID: string }) => {
@@ -136,7 +142,8 @@ function CheckoutPayPalContent() {
         method: "POST",
         headers: buildPayPalHeaders(initDataRef.current),
       });
-      const captureData = await res.json();
+      const { data: captureData, trace } = extractTrace(await res.json());
+      pushTrace(trace);
 
       if (captureData.status === "COMPLETED" || captureData.status === "ORDER_ALREADY_COMPLETED") {
         const vid = captureData.payment_source?.paypal?.attributes?.vault?.id || "";
@@ -150,7 +157,7 @@ function CheckoutPayPalContent() {
         showResult(`Error: ${JSON.stringify(captureData, null, 2)}`, "error");
       }
     },
-    [showResult, isAuth, saveVaultResult]
+    [showResult, isAuth, saveVaultResult, pushTrace]
   );
 
   useEffect(() => {
@@ -181,13 +188,14 @@ function CheckoutPayPalContent() {
           headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current!) },
           body: JSON.stringify(body),
         });
-        const d = await res.json();
+        const { data: d, trace } = extractTrace(await res.json());
+        pushTrace(trace);
         return d.id;
       };
     }
 
     window.paypal.Buttons(btnOpts).render("#paypal-button-container");
-  }, [sdkReady, initData, createOrder, onApprove, showResult, model]);
+  }, [sdkReady, initData, createOrder, onApprove, showResult, model, pushTrace]);
 
   return (
     <main className="min-h-screen bg-slate-50 py-8 px-4">
@@ -268,6 +276,8 @@ function CheckoutPayPalContent() {
         </div>
 
         <ResultArea message={resultMsg} type={resultType} />
+
+        <ApiTraceLog entries={traceEntries} />
       </div>
     </main>
   );
