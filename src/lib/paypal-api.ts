@@ -326,6 +326,7 @@ export async function createPaymentToken(
 export async function createOrder(body: Record<string, unknown>): Promise<{
   jsonResponse: Record<string, unknown>;
   httpStatusCode: number;
+  trace: ApiTraceEntry;
 }> {
   const tag = "[paypal-api.createOrder]";
   const url = `${base}/v2/checkout/orders`;
@@ -343,7 +344,13 @@ export async function createOrder(body: Record<string, unknown>): Promise<{
   const response = await fetch(url, { headers, method: "POST", body: JSON.stringify(body) });
 
   console.log(`${tag} response status: ${response.status} ${response.statusText}`);
-  const result = await handleResponse(response);
+  const result = await handleResponse(response, {
+    label: "Create Order",
+    method: "POST",
+    url,
+    requestHeaders: headers,
+    requestBody: body,
+  });
   console.log(`${tag} parsed response:`, JSON.stringify(result.jsonResponse, null, 2));
   return result;
 }
@@ -354,7 +361,12 @@ async function getOrderDetail(
 ): Promise<string> {
   const url = `${base}/v2/checkout/orders/${orderID}`;
   const response = await fetch(url, { method: "GET", headers: requestHeaders });
-  const result = await handleResponse(response);
+  const result = await handleResponse(response, {
+    label: "Get Order Detail (internal)",
+    method: "GET",
+    url,
+    requestHeaders,
+  });
   return result.jsonResponse.status === "COMPLETED"
     ? "ORDER_ALREADY_COMPLETED"
     : "ORDER_WAITING_CAPTURE";
@@ -363,6 +375,7 @@ async function getOrderDetail(
 export async function captureOrder(orderID: string): Promise<{
   jsonResponse: Record<string, unknown>;
   httpStatusCode: number | string;
+  trace?: ApiTraceEntry;
 }> {
   const url = `${base}/v2/checkout/orders/${orderID}/capture`;
   const requestHeaders = buildHeaders();
@@ -376,7 +389,12 @@ export async function captureOrder(orderID: string): Promise<{
   }
 
   const response = await fetch(url, { method: "POST", headers: requestHeaders });
-  return handleResponse(response);
+  return handleResponse(response, {
+    label: "Capture Order",
+    method: "POST",
+    url,
+    requestHeaders,
+  });
 }
 
 export async function callPayPalAPI(

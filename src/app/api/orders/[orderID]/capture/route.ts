@@ -16,8 +16,11 @@ export async function POST(
 
   try {
     const { orderID } = await params;
-    const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
-    return NextResponse.json(jsonResponse, { status: Number(httpStatusCode) || 200 });
+    const { jsonResponse, httpStatusCode, trace } = await captureOrder(orderID);
+    return NextResponse.json(
+      { ...jsonResponse, ...(trace ? { __trace: trace } : {}) },
+      { status: Number(httpStatusCode) || 200 }
+    );
   } catch (error) {
     console.error("Failed to capture order:", error);
     return NextResponse.json({ error: "Failed to capture order." }, { status: 500 });

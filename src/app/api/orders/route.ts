@@ -27,12 +27,12 @@ export async function POST(request: NextRequest) {
   initFromRequest(request);
 
   try {
-    const { jsonResponse, httpStatusCode } = await createOrder(body);
+    const { jsonResponse, httpStatusCode, trace } = await createOrder(body);
     console.log(`${tag} PayPal response [${httpStatusCode}]:`, JSON.stringify(jsonResponse, null, 2));
     if (httpStatusCode >= 400) {
       console.error(`${tag} PayPal returned error status ${httpStatusCode}`);
     }
-    return NextResponse.json(jsonResponse, { status: httpStatusCode });
+    return NextResponse.json({ ...jsonResponse, __trace: trace }, { status: httpStatusCode });
   } catch (error) {
     console.error(`${tag} unexpected error:`, error);
     return NextResponse.json({ error: "Failed to create order." }, { status: 500 });
