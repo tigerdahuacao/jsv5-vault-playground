@@ -11,6 +11,9 @@ import ResultArea, { type ResultType } from "@/components/ResultArea";
 import { USE_API_VAULT } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { buildPayPalHeaders } from "@/lib/api-client";
+import ApiTraceLog from "@/components/ApiTraceLog";
+import { useApiTraceLog } from "@/hooks/useApiTraceLog";
+import { extractTrace } from "@/lib/api-trace";
 
 type SourceType = "card" | "paypal";
 
@@ -36,6 +39,7 @@ function CheckoutAPIContent() {
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const [initData, setInitData] = useState<VaultInitData | null>(null);
   const initDataRef = useRef<VaultInitData | null>(null);
+  const { entries: traceEntries, pushTrace } = useApiTraceLog();
   const [sourceType, setSourceType] = useState<SourceType>("card");
 
   const [step1, setStep1] = useState<StepState>({
@@ -61,7 +65,8 @@ function CheckoutAPIContent() {
   const handleInitLoaded = useCallback((data: VaultInitData) => {
     setInitData(data);
     initDataRef.current = data;
-  }, []);
+    pushTrace(data.__trace || []);
+  }, [pushTrace]);
 
   // Step 1 — Create setup token for card
   const runStep1 = async () => {
@@ -74,7 +79,8 @@ function CheckoutAPIContent() {
         headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
         body: JSON.stringify({ endpoint: "/v3/vault/setup-tokens", requestBody: body }),
       });
-      const data = await res.json();
+      const { data, trace } = extractTrace(await res.json());
+      pushTrace(trace);
       const pretty = JSON.stringify(data, null, 2);
       setStep1((s) => ({ ...s, loading: false, done: true, response: pretty }));
 
@@ -103,7 +109,8 @@ function CheckoutAPIContent() {
         headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
         body: JSON.stringify({ endpoint: "/v3/vault/payment-tokens", requestBody: body }),
       });
-      const data = await res.json();
+      const { data, trace } = extractTrace(await res.json());
+      pushTrace(trace);
       const pretty = JSON.stringify(data, null, 2);
       setStep2((s) => ({ ...s, loading: false, done: true, response: pretty }));
 
@@ -134,7 +141,8 @@ function CheckoutAPIContent() {
         headers: { "Content-Type": "application/json", ...buildPayPalHeaders(initDataRef.current) },
         body: JSON.stringify(body),
       });
-      const orderData = await createRes.json();
+      const { data: orderData, trace: createTrace } = extractTrace(await createRes.json());
+      pushTrace(createTrace);
 
       if (!orderData.id) {
         setStep3((s) => ({ ...s, loading: false, response: JSON.stringify(orderData, null, 2) }));
@@ -146,7 +154,8 @@ function CheckoutAPIContent() {
         method: "POST",
         headers: buildPayPalHeaders(initDataRef.current),
       });
-      const captureData = await captureRes.json();
+      const { data: captureData, trace: captureTrace } = extractTrace(await captureRes.json());
+      pushTrace(captureTrace);
       const pretty = JSON.stringify(captureData, null, 2);
       setStep3((s) => ({ ...s, loading: false, done: true, response: pretty }));
       setGlobalResult(`✓ Payment completed! Order: ${orderData.id}`);
@@ -167,7 +176,8 @@ function CheckoutAPIContent() {
         `/api/vault/paypal-api?endpoint=/v3/vault/payment-tokens&pathParam=customer_id=${customerId}`,
         { headers: buildPayPalHeaders(initDataRef.current) }
       );
-      const data = await res.json();
+      const { data, trace } = extractTrace(await res.json());
+      pushTrace(trace);
       setStep4((s) => ({
         ...s,
         loading: false,
@@ -295,6 +305,8 @@ function CheckoutAPIContent() {
         </div>
 
         <ResultArea message={globalResult} type={globalResultType} />
+
+        <ApiTraceLog entries={traceEntries} />
       </div>
     </main>
   );
