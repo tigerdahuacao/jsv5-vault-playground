@@ -11,6 +11,9 @@ import ResultArea, { type ResultType } from "@/components/ResultArea";
 import { useVaultStore } from "@/store/vault";
 import { cn } from "@/lib/utils";
 import { buildPayPalHeaders } from "@/lib/api-client";
+import ApiTraceLog from "@/components/ApiTraceLog";
+import { useApiTraceLog } from "@/hooks/useApiTraceLog";
+import { extractTrace } from "@/lib/api-trace";
 
 
 function SavePayPalContent() {
@@ -19,6 +22,7 @@ function SavePayPalContent() {
   const isAuth = searchParams.get("is_use_PAYPAL_AUTH_ASSERTION") === "true";
 
   const saveVaultResult = useVaultStore((s) => s.saveVaultResult);
+  const { entries: traceEntries, pushTrace } = useApiTraceLog();
   const vaultRef = useRef<VaultCommonPartRef>(null);
   const initDataRef = useRef<VaultInitData | null>(null);
   const [permitMultipleTokens, setPermitMultipleTokens] = useState(false);
@@ -44,9 +48,10 @@ function SavePayPalContent() {
   const handleInitLoaded = useCallback(
     (data: VaultInitData) => {
       initDataRef.current = data;
+      pushTrace(data.__trace || []);
       loadSdk(data);
     },
-    [loadSdk]
+    [loadSdk, pushTrace]
   );
 
   const createVaultSetupToken = useCallback(async () => {
@@ -60,9 +65,10 @@ function SavePayPalContent() {
     const res = await fetch(`/api/vault/setup-token-paypal?${params}`, {
       headers: buildPayPalHeaders(initDataRef.current),
     });
-    const data = await res.json();
+    const { data, trace } = extractTrace(await res.json());
+    pushTrace(trace);
     return data.id;
-  }, [showResult]);
+  }, [showResult, pushTrace]);
 
   const onApprove = useCallback(
     async (data: { vaultSetupToken: string }) => {
@@ -72,7 +78,8 @@ function SavePayPalContent() {
         `/api/vault/payment-token?token_id=${data.vaultSetupToken}`,
         { headers: buildPayPalHeaders(initDataRef.current) }
       );
-      const result = await res.json();
+      const { data: result, trace } = extractTrace(await res.json());
+      pushTrace(trace);
 
       const vaultId = result.id || "";
       const customerId = result.customer?.id || "";
@@ -82,7 +89,7 @@ function SavePayPalContent() {
         "success"
       );
     },
-    [showResult, isAuth, saveVaultResult]
+    [showResult, isAuth, saveVaultResult, pushTrace]
   );
 
   useEffect(() => {
@@ -176,6 +183,8 @@ function SavePayPalContent() {
         </div>
 
         <ResultArea message={resultMsg} type={resultType} />
+
+        <ApiTraceLog entries={traceEntries} />
       </div>
     </main>
   );
