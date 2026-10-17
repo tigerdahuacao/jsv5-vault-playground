@@ -230,6 +230,7 @@ export async function createSetupTokenSavePayPal(
 ): Promise<{
   jsonResponse: Record<string, unknown>;
   httpStatusCode: number;
+  trace: ApiTraceEntry;
 }> {
   const url = `${base}/v3/vault/setup-tokens`;
   const paypalSource: Record<string, unknown> = {
@@ -265,12 +266,19 @@ export async function createSetupTokenSavePayPal(
 
   console.log("[Save PayPal Setup Token API]:", JSON.stringify(payload, null, 2));
 
+  const headers = buildHeaders();
   const response = await fetch(url, {
-    headers: buildHeaders(),
+    headers,
     method: "POST",
     body: JSON.stringify(payload),
   });
-  return handleResponse(response);
+  return handleResponse(response, {
+    label: "Create Setup Token (PayPal)",
+    method: "POST",
+    url,
+    requestHeaders: headers,
+    requestBody: payload,
+  });
 }
 
 export async function createSetupTokenSaveCard(
@@ -278,6 +286,7 @@ export async function createSetupTokenSaveCard(
 ): Promise<{
   jsonResponse: Record<string, unknown>;
   httpStatusCode: number;
+  trace: ApiTraceEntry;
 }> {
   const url = `${base}/v3/vault/setup-tokens`;
   const cardSource: Record<string, unknown> = {
@@ -296,31 +305,45 @@ export async function createSetupTokenSaveCard(
 
   console.log("[Save Card Setup Token API]:", JSON.stringify(payload, null, 2));
 
+  const headers = buildHeaders();
   const response = await fetch(url, {
-    headers: buildHeaders(),
+    headers,
     method: "POST",
     body: JSON.stringify(payload),
   });
-  return handleResponse(response);
+  return handleResponse(response, {
+    label: "Create Setup Token (Card)",
+    method: "POST",
+    url,
+    requestHeaders: headers,
+    requestBody: payload,
+  });
 }
 
 export async function createPaymentToken(
   token_id: string
-): Promise<Record<string, unknown>> {
+): Promise<{ jsonResponse: Record<string, unknown>; trace: ApiTraceEntry }> {
   const url = `${base}/v3/vault/payment-tokens`;
   const payload = {
     payment_source: { token: { id: token_id, type: "SETUP_TOKEN" } },
   };
 
   console.log("[Create Payment Token API]:", JSON.stringify(payload, null, 2));
+  const headers = buildHeaders();
   const response = await fetch(url, {
-    headers: buildHeaders(),
+    headers,
     method: "POST",
     body: JSON.stringify(payload),
   });
 
-  const { jsonResponse } = await handleResponse(response);
-  return jsonResponse;
+  const { jsonResponse, trace } = await handleResponse(response, {
+    label: "Create Payment Token",
+    method: "POST",
+    url,
+    requestHeaders: headers,
+    requestBody: payload,
+  });
+  return { jsonResponse, trace };
 }
 
 export async function createOrder(body: Record<string, unknown>): Promise<{
@@ -402,11 +425,12 @@ export async function callPayPalAPI(
   requestBody: Record<string, unknown> | null,
   endpoint: string,
   getPathParam?: string
-): Promise<{ jsonResponse: Record<string, unknown>; httpStatusCode: number }> {
+): Promise<{ jsonResponse: Record<string, unknown>; httpStatusCode: number; trace: ApiTraceEntry }> {
   const url = `${base}${endpoint}`;
   const headers = buildHeaders();
 
   let response: Response;
+  let finalUrl = url;
   if (httpMethod === "POST") {
     response = await fetch(url, {
       headers,
@@ -414,10 +438,16 @@ export async function callPayPalAPI(
       body: JSON.stringify(requestBody),
     });
   } else {
-    const getUrl = `${url}?${getPathParam}`;
-    response = await fetch(getUrl, { headers, method: "GET" });
+    finalUrl = `${url}?${getPathParam}`;
+    response = await fetch(finalUrl, { headers, method: "GET" });
   }
 
-  return handleResponse(response);
+  return handleResponse(response, {
+    label: `${httpMethod} ${endpoint}`,
+    method: httpMethod,
+    url: finalUrl,
+    requestHeaders: headers,
+    requestBody: httpMethod === "POST" ? requestBody ?? undefined : undefined,
+  });
 }
 

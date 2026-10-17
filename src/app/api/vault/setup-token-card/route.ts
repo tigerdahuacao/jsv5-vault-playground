@@ -13,9 +13,9 @@ export async function GET(request: NextRequest) {
   try {
     const merchantCustomerId =
       request.nextUrl.searchParams.get("merchant_customer_id") || "";
-    const { jsonResponse, httpStatusCode } =
+    const { jsonResponse, httpStatusCode, trace } =
       await createSetupTokenSaveCard(merchantCustomerId);
-    return NextResponse.json(jsonResponse, { status: httpStatusCode });
+    return NextResponse.json({ ...jsonResponse, __trace: trace }, { status: httpStatusCode });
   } catch (error) {
     console.error("Failed to create card setup token:", error);
     return NextResponse.json({ error: "Failed to create setup token." }, { status: 500 });
