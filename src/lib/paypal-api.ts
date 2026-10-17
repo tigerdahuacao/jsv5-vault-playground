@@ -1,3 +1,4 @@
+import type { ApiTraceEntry } from "@/types/trace";
 
 const base = "https://api.sandbox.paypal.com";
 
@@ -79,12 +80,47 @@ function buildHeaders(): Record<string, string> {
   return headers;
 }
 
+interface TraceInput {
+  label: string;
+  method: string;
+  url: string;
+  requestHeaders: Record<string, string>;
+  requestBody?: unknown;
+}
+
+function buildTrace(
+  input: TraceInput,
+  status: number,
+  responseHeaders: Record<string, string>,
+  responseBody: unknown
+): ApiTraceEntry {
+  return {
+    id: crypto.randomUUID(),
+    label: input.label,
+    timestamp: Date.now(),
+    request: {
+      method: input.method,
+      url: input.url,
+      headers: input.requestHeaders,
+      body: input.requestBody,
+    },
+    response: {
+      status,
+      headers: responseHeaders,
+      body: responseBody,
+    },
+  };
+}
+
 async function handleResponse(
-  response: Response
-): Promise<{ jsonResponse: Record<string, unknown>; httpStatusCode: number }> {
+  response: Response,
+  traceInput: TraceInput
+): Promise<{ jsonResponse: Record<string, unknown>; httpStatusCode: number; trace: ApiTraceEntry }> {
+  const responseHeaders = Object.fromEntries(response.headers.entries());
   try {
     const jsonResponse = await response.json();
-    return { jsonResponse, httpStatusCode: response.status };
+    const trace = buildTrace(traceInput, response.status, responseHeaders, jsonResponse);
+    return { jsonResponse, httpStatusCode: response.status, trace };
   } catch {
     const errorMessage = await response.text();
     throw new Error(errorMessage);
