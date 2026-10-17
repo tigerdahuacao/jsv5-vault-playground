@@ -139,6 +139,7 @@ export interface GenerateTokenParams {
 export async function generateToken(params: GenerateTokenParams): Promise<{
   access_token: string;
   id_token: string;
+  trace: ApiTraceEntry;
 }> {
   const { clientId, secret, vaultModel, customerId, merchantId, isUseAuthAssertion } = params;
 
@@ -166,7 +167,8 @@ export async function generateToken(params: GenerateTokenParams): Promise<{
     }
   }
 
-  const response = await fetch(`${base}/v1/oauth2/token`, {
+  const url = `${base}/v1/oauth2/token`;
+  const response = await fetch(url, {
     method: "POST",
     body: new URLSearchParams(requestBody),
     headers,
@@ -177,7 +179,13 @@ export async function generateToken(params: GenerateTokenParams): Promise<{
     id_token: string;
   };
   access_token = data.access_token;
-  return { access_token: data.access_token, id_token: data.id_token };
+  const trace = buildTrace(
+    { label: "Init — Generate Access Token", method: "POST", url, requestHeaders: headers, requestBody },
+    response.status,
+    Object.fromEntries(response.headers.entries()),
+    data
+  );
+  return { access_token: data.access_token, id_token: data.id_token, trace };
 }
 
 // Deprecated but kept to avoid breaking flows
@@ -185,23 +193,34 @@ export async function generateClientToken(params: {
   clientId: string;
   secret: string;
   customerId: string;
-}): Promise<string | undefined> {
+}): Promise<{ client_token?: string; trace?: ApiTraceEntry }> {
+  const { clientId, secret, customerId } = params;
+  if (!clientId || !secret) return {};
+
+  const url = `${base}/v1/identity/generate-token`;
+  const auth = Buffer.from(clientId + ":" + secret).toString("base64");
+  const headers: Record<string, string> = {
+    Authorization: `Basic ${auth}`,
+    "Content-Type": "application/json",
+  };
+  const requestBody = { customer_id: customerId };
+
   try {
-    const { clientId, secret, customerId } = params;
-    if (!clientId || !secret) return undefined;
-    const auth = Buffer.from(clientId + ":" + secret).toString("base64");
-    const response = await fetch(`${base}/v1/identity/generate-token`, {
+    const response = await fetch(url, {
       method: "POST",
-      body: JSON.stringify({ customer_id: customerId }),
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/json",
-      },
+      body: JSON.stringify(requestBody),
+      headers,
     });
     const data = (await response.json()) as { client_token: string };
-    return data.client_token;
+    const trace = buildTrace(
+      { label: "Init — Generate Client Token (deprecated)", method: "POST", url, requestHeaders: headers, requestBody },
+      response.status,
+      Object.fromEntries(response.headers.entries()),
+      data
+    );
+    return { client_token: data.client_token, trace };
   } catch {
-    return undefined;
+    return {};
   }
 }
 
