@@ -42,6 +42,7 @@ import {
 } from "react";
 import { useVaultStore, type FlowType } from "@/store/vault";
 import { cn } from "@/lib/utils";
+import type { ApiTraceEntry } from "@/types/trace";
 
 export interface VaultInitData {
   clientId: string;
@@ -56,6 +57,7 @@ export interface VaultInitData {
   PAYPAL_TEST_CARD_NO: string;
   PAYPAL_TEST_CARD_DATE: string;
   PAYPAL_TEST_CARD_CVV: string;
+  __trace?: ApiTraceEntry[];
 }
 
 export interface VaultCommonPartRef {
