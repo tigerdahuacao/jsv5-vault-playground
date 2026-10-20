@@ -23,11 +23,13 @@ export async function GET(request: NextRequest) {
     const PAYPAL_CLIENT_ID = entry?.clientID || "";
     const PAYPAL_CLIENT_SECRET = entry?.secret || "";
 
-    const clientTokenResult = await generateClientToken({
-      clientId: PAYPAL_CLIENT_ID,
-      secret: PAYPAL_CLIENT_SECRET,
-      customerId: customerID,
-    });
+    const clientTokenResult = customerID
+      ? await generateClientToken({
+          clientId: PAYPAL_CLIENT_ID,
+          secret: PAYPAL_CLIENT_SECRET,
+          customerId: customerID,
+        })
+      : null;
     const { id_token, access_token, trace: tokenTrace } = await generateToken({
       clientId: PAYPAL_CLIENT_ID,
       secret: PAYPAL_CLIENT_SECRET,
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
       isUseAuthAssertion: is_use_PAYPAL_AUTH_ASSERTION,
     });
 
-    const __trace: ApiTraceEntry[] = [clientTokenResult.trace, tokenTrace].filter(
+    const __trace: ApiTraceEntry[] = [clientTokenResult?.trace, tokenTrace].filter(
       (t): t is ApiTraceEntry => Boolean(t)
     );
 
