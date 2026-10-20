@@ -95,6 +95,11 @@ function CheckoutCardWithPciContent() {
     setIsLoading(true);
     showResult("Creating order...", "info");
 
+    // "Use Vault ID to Pay" is disabled for first-time buyers (see VaultCommonPart) —
+    // it only applies to returning buyers paying with an existing vault_id. For a
+    // first-time purchase there is no opt-out: the whole point of this flow is to
+    // vault the raw card during the purchase so a vault_id/customer_id come back
+    // from capture and the returning-buyer path has something to pay with.
     const card: Record<string, unknown> =
       useVault && payVaultId
         ? { vault_id: payVaultId }
@@ -104,13 +109,11 @@ function CheckoutCardWithPciContent() {
               expiry: cardExpiry,
               security_code: cardCvv,
             };
-            if (useVault) {
-              const attributes: Record<string, unknown> = {
-                vault: { store_in_vault: "ON_SUCCESS" },
-              };
-              if (customerIdInput) attributes.customer = { id: customerIdInput };
-              c.attributes = attributes;
-            }
+            const attributes: Record<string, unknown> = {
+              vault: { store_in_vault: "ON_SUCCESS" },
+            };
+            if (customerIdInput) attributes.customer = { id: customerIdInput };
+            c.attributes = attributes;
             return c;
           })();
 
@@ -145,10 +148,15 @@ function CheckoutCardWithPciContent() {
       pushTrace(captureTrace);
 
       if (captureData.status === "COMPLETED" || captureData.status === "ORDER_ALREADY_COMPLETED") {
-        const capture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
-        const txn = capture?.id || captureData.id || "";
-        const cid = captureData.payment_source?.card?.attributes?.vault?.customer?.id || "";
-        const vid = captureData.payment_source?.card?.attributes?.vault?.id || "";
+        // Sandbox test cards (no 3DS) often complete the order synchronously during
+        // creation. In that case captureOrder() short-circuits with a bare
+        // { status: "ORDER_ALREADY_COMPLETED" } and the real capture/vault data only
+        // exists on the create-order response — fall back to it.
+        const source = captureData.status === "ORDER_ALREADY_COMPLETED" ? orderData : captureData;
+        const capture = source.purchase_units?.[0]?.payments?.captures?.[0];
+        const txn = capture?.id || source.id || "";
+        const cid = source.payment_source?.card?.attributes?.vault?.customer?.id || "";
+        const vid = source.payment_source?.card?.attributes?.vault?.id || "";
 
         setTxnId(txn);
         setCustomerId(cid);
