@@ -36,6 +36,7 @@ function CheckoutCardWithPciContent() {
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
+  const [saveToVault, setSaveToVault] = useState(false);
 
   const [resultMsg, setResultMsg] = useState("Waiting for payment...");
   const [resultType, setResultType] = useState<ResultType>("idle");
@@ -96,10 +97,9 @@ function CheckoutCardWithPciContent() {
     showResult("Creating order...", "info");
 
     // "Use Vault ID to Pay" is disabled for first-time buyers (see VaultCommonPart) —
-    // it only applies to returning buyers paying with an existing vault_id. For a
-    // first-time purchase there is no opt-out: the whole point of this flow is to
-    // vault the raw card during the purchase so a vault_id/customer_id come back
-    // from capture and the returning-buyer path has something to pay with.
+    // it only applies to returning buyers paying with an existing vault_id. Whether to
+    // vault the raw card during a first-time purchase is controlled independently by
+    // the "Save to Vault" checkbox below (mirrors checkout-ACDC's isVaultSave).
     const card: Record<string, unknown> =
       useVault && payVaultId
         ? { vault_id: payVaultId }
@@ -109,11 +109,13 @@ function CheckoutCardWithPciContent() {
               expiry: cardExpiry,
               security_code: cardCvv,
             };
-            const attributes: Record<string, unknown> = {
-              vault: { store_in_vault: "ON_SUCCESS" },
-            };
-            if (customerIdInput) attributes.customer = { id: customerIdInput };
-            c.attributes = attributes;
+            if (saveToVault) {
+              const attributes: Record<string, unknown> = {
+                vault: { store_in_vault: "ON_SUCCESS" },
+              };
+              if (customerIdInput) attributes.customer = { id: customerIdInput };
+              c.attributes = attributes;
+            }
             return c;
           })();
 
@@ -272,6 +274,21 @@ function CheckoutCardWithPciContent() {
                   />
                 </div>
               </div>
+              <label className="flex items-center gap-3 px-4 py-3 rounded-lg border-2 border-slate-200 bg-white cursor-pointer hover:border-blue-300 transition-all">
+                <input
+                  type="checkbox"
+                  checked={saveToVault}
+                  onChange={(e) => setSaveToVault(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Save to Vault</p>
+                  <p className="text-xs text-slate-400">
+                    Store this card for future use (payment_source.card.attributes.vault)
+                  </p>
+                </div>
+              </label>
+
               <button
                 onClick={handlePay}
                 disabled={isLoading || !initData}
