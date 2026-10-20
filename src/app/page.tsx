@@ -38,6 +38,14 @@ const flows: Flow[] = [
         color: "blue",
     },
     {
+        id: "checkout-card-with-pci",
+        label: "Raw Card API",
+        description: "Collect card number directly (no SDK), vault via Order API",
+        icon: "🔓",
+        category: "with_purchase",
+        color: "blue",
+    },
+    {
         id: "save-card",
         label: "Save Card",
         description: "Vault a card without making a purchase",
